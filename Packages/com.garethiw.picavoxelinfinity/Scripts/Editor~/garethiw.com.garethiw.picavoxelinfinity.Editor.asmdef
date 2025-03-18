@@ -1,0 +1,16 @@
+{
+    "name": "garethiw.com.garethiw.picavoxelinfinity.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:7cd3a65c85d0c264eb3581defd7f2c63"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

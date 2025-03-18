@@ -1,0 +1,18 @@
+{
+  "name": "com.garethiw.picavoxelinfinity",
+  "version": "1.0.0",
+  "displayName": "PicaVoxel Infinity",
+  "description": "Picavoxel, but infinite!",
+  "unity": "2022.3",
+  "unityRelease": "47f1",
+  "documentationUrl": "https://example.com/",
+  "changelogUrl": "",
+  "licensesUrl": "",
+  "dependencies": {},
+ "keywords": [],
+  "author": {
+    "name": "Gareth Williams",
+    "email": "g@gareth.pw",
+    "url": "https://gareth.pw"
+  }
+}
