@@ -12,6 +12,7 @@ using System.IO;
 using System.Threading;
 using UnityEngine;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 using Debug = UnityEngine.Debug;
@@ -54,7 +55,6 @@ namespace PicaVoxel
     /// </summary>
     [AddComponentMenu("PicaVoxel/PicaVoxel Volume")]
     [Serializable]
-    [ExecuteInEditMode]
     [SelectionBase]
     public class Volume : MonoBehaviour
     {
@@ -68,12 +68,16 @@ namespace PicaVoxel
 
         public Vector3 Pivot = Vector3.zero;
         
-        public Dictionary<(int,int,int), Chunk> Chunks = new Dictionary<(int,int,int),Chunk>();
+        public Dictionary<(int,int,int), Chunk> Chunks = new();
 
         // Infinite mode will be for infinite terrain, which will keep generating as you move
         // Non-infinite will only add chunks when edited, and all chunks will be visible/rendered at all times
         public bool InfiniteMode = false;
+        public Vector3Int InfiniteChunkBounds = Vector3Int.zero;
 
+        public GeneratorType GeneratorType = GeneratorType.Solid;
+        public int GenerationSeed;
+        
         // Chunk generation settings
         public MeshingMode MeshingMode;
         public MeshingMode MeshColliderMeshingMode;
@@ -94,6 +98,9 @@ namespace PicaVoxel
         public Color ImportedCutoutColor;
 #endif
         
+        private I_VoxelDataGenerator _voxelDataGenerator;
+
+        
         private void Awake()
         {
             //destructBatch = new Batch(this, XSize*YSize*ZSize);
@@ -101,14 +108,53 @@ namespace PicaVoxel
 
         private void Start()
         {
-            Chunks[(0, 0, 0)] = Instantiate(ChunkPrefab).GetComponent<Chunk>();
+            switch (GeneratorType)
+            {
+                case GeneratorType.Solid:
+                    _voxelDataGenerator = new SolidGenerator();
+                    break;
+                case GeneratorType.Random:
+                    _voxelDataGenerator = new RandomGenerator();
+                    break;
+                case GeneratorType.Terrain:
+                    _voxelDataGenerator = new TerrainGenerator();
+                    break;
+            }
+            _voxelDataGenerator.Seed = GenerationSeed;
+            
+            for (int z = -(InfiniteChunkBounds.z-1); z <= InfiniteChunkBounds.z-1; z++)
+                for (int y = -(InfiniteChunkBounds.y-1); y <= InfiniteChunkBounds.y-1; y++)
+                    for (int x = -(InfiniteChunkBounds.x-1); x <= InfiniteChunkBounds.x-1; x++)
+                    {
+                        if (!Chunks.ContainsKey((x, y, z)))
+                            Chunks[(x, y, z)] = Instantiate(ChunkPrefab, transform, false).GetComponent<Chunk>();
+                        Chunks[(x, y, z)].Initialize((x, y, z));
+                    }
         }
-
+        
         public void GenerateVoxel(int x, int y, int z, ref Voxel voxel)
         {
-            voxel.Color = Color.white;
-            voxel.Active = true;
-            voxel.Value = 1;
+            _voxelDataGenerator.GenerateVoxel(x, y, z, ref voxel);
+        }
+
+        [CanBeNull]
+        public Chunk GetChunk((int x, int y, int z) pos)
+        {
+            if (!Chunks.ContainsKey(pos))
+                return null;
+            
+            return Chunks[pos];
+        }
+
+        public void RegenerateMeshes(bool immediate = false)
+        {
+            foreach (Chunk c in Chunks.Values)
+            {
+                if (c)
+                {
+                    c.GenerateMesh(immediate);
+                }
+            }
         }
         
         /// <summary>
