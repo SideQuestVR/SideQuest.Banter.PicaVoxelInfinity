@@ -46,7 +46,9 @@ namespace PicaVoxel
             CalculatingMesh,
             Ready
         }
-        private bool _isDirty = true;
+
+        private bool _isDataDirty = true;
+        private bool _isMeshDirty = false;
         private ChunkStatus status = ChunkStatus.NoChange;
 
         private List<Vector3> vertices = new List<Vector3>();
@@ -69,18 +71,27 @@ namespace PicaVoxel
             transform.position = new Vector3((Position.x*Volume.XChunkSize)-(Volume.XChunkSize*0.5f), (Position.y*Volume.YChunkSize)-(Volume.YChunkSize*0.5f), (Position.z*Volume.ZChunkSize)-(Volume.ZChunkSize*0.5f)) * Volume.VoxelSize;
             if(Voxels==null || Voxels.Length==0)
                 Voxels = new Voxel[Volume.XChunkSize * Volume.YChunkSize * Volume.ZChunkSize];
-            Generate();
             #if UNITY_EDITOR
             gameObject.name = $"Chunk {Position.x},{Position.y},{Position.z}";
             #endif
         }
 
-        private void Generate()
+        private void GenerateData()
         {
+            if (!Volume.IsDataReady)
+            {
+                _isDataDirty = true;
+                return;
+            }
+
+            //Debug.Log($"Chunk {Position.x},{Position.y},{Position.z} is doing data gen");
             for (int z = 0; z < Volume.ZChunkSize; z++)
                 for (int y = 0; y < Volume.YChunkSize; y++)
                     for (int x = 0; x < Volume.XChunkSize; x++)
                         Volume.GenerateVoxel(x+(Volume.XChunkSize*Position.x),y+(Volume.YChunkSize*Position.y),z+(Volume.ZChunkSize*Position.z),ref Voxels[x + Volume.XChunkSize * (y + Volume.YChunkSize * z)]);
+            //Debug.Log($"Chunk {Position.x},{Position.y},{Position.z} is finished data gen");
+
+            _isMeshDirty = true;
         }
 
         public Voxel? GetVoxel((int x, int y, int z) pos)
@@ -93,22 +104,37 @@ namespace PicaVoxel
         
         private void Update()
         {
-            if (status == ChunkStatus.NoChange && _isDirty)
+            if (_isDataDirty)
             {
-                _isDirty = false;
+                //Debug.Log($"Chunk {Position.x},{Position.y},{Position.z} has dirty data");
+
+                _isDataDirty = false;
+                
+                if(!ThreadPool.QueueUserWorkItem(delegate
+                       {
+                           GenerateData();
+                       })
+                    ) 
+                    GenerateData();
+            }
+            
+            if (status == ChunkStatus.NoChange && _isMeshDirty)
+            {
+                //Debug.Log($"Chunk {Position.x},{Position.y},{Position.z} has dirty mesh");
+                _isMeshDirty = false;
                 GenerateMesh(false);
             }
             
             if (status == ChunkStatus.Ready)
             {
                 status = ChunkStatus.NoChange;
-                if (!_isDirty)
+                if (!_isMeshDirty)
                 {
                     SetMesh();
                 }
                 else
                 {
-                    _isDirty = false;
+                    _isMeshDirty = false;
                     GenerateMesh(false);
                 }
             }
@@ -140,7 +166,7 @@ namespace PicaVoxel
             {
                 if (status != ChunkStatus.NoChange)
                 {
-                    _isDirty = true;
+                    _isMeshDirty = true;
                 }
     
                 if(!ThreadPool.QueueUserWorkItem(delegate

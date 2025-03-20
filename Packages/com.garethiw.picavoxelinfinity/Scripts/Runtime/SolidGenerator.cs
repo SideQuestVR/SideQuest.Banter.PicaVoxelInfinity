@@ -2,15 +2,17 @@
 
 namespace PicaVoxel
 {
-    public class SolidGenerator : I_VoxelDataGenerator
+    public class SolidGenerator : MonoBehaviour, I_VoxelDataGenerator
     {
         private int _seed;
-
         public int Seed
         {
             get => _seed;
             set => _seed = value;
         }
+        
+        private bool _isReady = true;
+        public bool IsReady => _isReady;
 
         public void GenerateVoxel(int x, int y, int z, ref Voxel voxel)
         {

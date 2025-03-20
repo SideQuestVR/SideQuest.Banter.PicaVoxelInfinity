@@ -183,20 +183,28 @@ PrefabInstance:
       value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
+      propertyPath: GeneratorType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
+      propertyPath: GenerationSeed
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
       propertyPath: SelfShadingIntensity
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
       propertyPath: InfiniteChunkBounds.x
-      value: 10
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
       propertyPath: InfiniteChunkBounds.y
-      value: 1
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
       propertyPath: InfiniteChunkBounds.z
-      value: 10
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 6945259711021768169, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
       propertyPath: m_Name
@@ -242,7 +250,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 1
+    m_Type: 0
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1

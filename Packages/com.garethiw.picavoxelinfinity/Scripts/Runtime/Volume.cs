@@ -74,9 +74,10 @@ namespace PicaVoxel
         // Non-infinite will only add chunks when edited, and all chunks will be visible/rendered at all times
         public bool InfiniteMode = false;
         public Vector3Int InfiniteChunkBounds = Vector3Int.zero;
-
-        public GeneratorType GeneratorType = GeneratorType.Solid;
+        
         public int GenerationSeed;
+
+        public bool IsDataReady => _voxelDataGenerator.IsReady;
         
         // Chunk generation settings
         public MeshingMode MeshingMode;
@@ -108,17 +109,10 @@ namespace PicaVoxel
 
         private void Start()
         {
-            switch (GeneratorType)
+            _voxelDataGenerator = GetComponent<I_VoxelDataGenerator>();
+            if (_voxelDataGenerator == null)
             {
-                case GeneratorType.Solid:
-                    _voxelDataGenerator = new SolidGenerator();
-                    break;
-                case GeneratorType.Random:
-                    _voxelDataGenerator = new RandomGenerator();
-                    break;
-                case GeneratorType.Terrain:
-                    _voxelDataGenerator = new TerrainGenerator();
-                    break;
+                _voxelDataGenerator = gameObject.AddComponent<SolidGenerator>();
             }
             _voxelDataGenerator.Seed = GenerationSeed;
             

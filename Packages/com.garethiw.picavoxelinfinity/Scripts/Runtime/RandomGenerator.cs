@@ -2,7 +2,7 @@
 
 namespace PicaVoxel
 {
-    public class RandomGenerator : I_VoxelDataGenerator
+    public class RandomGenerator : MonoBehaviour, I_VoxelDataGenerator
     {
         private int _seed;
         private System.Random _random;
@@ -16,6 +16,9 @@ namespace PicaVoxel
                 _random = new System.Random(_seed);
             }
         }
+        
+        private bool _isReady = true;
+        public bool IsReady => _isReady;
 
         public void GenerateVoxel(int x, int y, int z, ref Voxel voxel)
         {
