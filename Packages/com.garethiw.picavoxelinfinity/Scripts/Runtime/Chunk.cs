@@ -73,7 +73,6 @@ namespace PicaVoxel
             if (mr is null) mr = GetComponent<MeshRenderer>();
             if (mc is null) mc = GetComponent<MeshCollider>();
             mr.enabled = false;
-            mc.enabled = false;
             Position = pos;
             transform.position = new Vector3((Position.x*Volume.ChunkSize)-(Volume.ChunkSize*0.5f), (Position.y*Volume.ChunkSize)-(Volume.ChunkSize*0.5f), (Position.z*Volume.ChunkSize)-(Volume.ChunkSize*0.5f)) * Volume.VoxelSize;
             if(Voxels==null || Voxels.Length==0)
@@ -253,7 +252,7 @@ namespace PicaVoxel
             mf.sharedMesh.SetTriangles(indexes, 0);
             mf.sharedMesh.RecalculateNormals();
 
-            if (mc != null && Volume.CollisionMode != CollisionMode.None)
+            if (Volume.CollisionMode != CollisionMode.None)
             {
                 updateColliderNextFrame = true;
             }
@@ -261,7 +260,6 @@ namespace PicaVoxel
 
         private void UpdateCollider()
         {
-            mc.sharedMesh = null;
             mf.sharedMesh.RecalculateBounds();
             mc.sharedMesh = mf.sharedMesh;
             mc.enabled = true;
