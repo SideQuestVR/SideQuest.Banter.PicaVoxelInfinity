@@ -60,9 +60,7 @@ namespace PicaVoxel
     {
         public GameObject ChunkPrefab;
 
-        public int XChunkSize = 16;
-        public int YChunkSize = 16;
-        public int ZChunkSize = 16;
+        public int ChunkSize = 16;
         
         public float VoxelSize = 1f;
 
@@ -71,9 +69,11 @@ namespace PicaVoxel
         public Dictionary<(int,int,int), Chunk> Chunks = new();
 
         // Infinite mode will be for infinite terrain, which will keep generating as you move
-        // Non-infinite will only add chunks when edited, and all chunks will be visible/rendered at all times
-        public bool InfiniteMode = false;
+        // Non-infinite will only add chunks when edited, and all chunks will be visible/rendered at startup
+        public bool IsInfinite = false;
+        public int InfiniteChunkRadius;
         public Vector3Int InfiniteChunkBounds = Vector3Int.zero;
+        public float InfiniteUpdateInterval = 0.25f;
         
         public int GenerationSeed;
 
@@ -98,8 +98,11 @@ namespace PicaVoxel
         public int ImportedMode;
         public Color ImportedCutoutColor;
 #endif
-        
+
+        private Transform _cameraTransform;
+        private float _infiniteUpdateTimer;
         private I_VoxelDataGenerator _voxelDataGenerator;
+        private bool _isFirstPass;
 
         
         private void Awake()
@@ -115,17 +118,114 @@ namespace PicaVoxel
                 _voxelDataGenerator = gameObject.AddComponent<SolidGenerator>();
             }
             _voxelDataGenerator.Seed = GenerationSeed;
-            
-            for (int z = -(InfiniteChunkBounds.z-1); z <= InfiniteChunkBounds.z-1; z++)
-                for (int y = -(InfiniteChunkBounds.y-1); y <= InfiniteChunkBounds.y-1; y++)
-                    for (int x = -(InfiniteChunkBounds.x-1); x <= InfiniteChunkBounds.x-1; x++)
-                    {
-                        if (!Chunks.ContainsKey((x, y, z)))
-                            Chunks[(x, y, z)] = Instantiate(ChunkPrefab, transform, false).GetComponent<Chunk>();
-                        Chunks[(x, y, z)].Initialize((x, y, z));
-                    }
+
+            _cameraTransform = Camera.main.transform;
+
+            if (!IsInfinite)
+            {
+                for (int z = -(InfiniteChunkBounds.z - 1); z <= InfiniteChunkBounds.z - 1; z++)
+                    for (int y = -(InfiniteChunkBounds.y - 1); y <= InfiniteChunkBounds.y - 1; y++)
+                        for (int x = -(InfiniteChunkBounds.x - 1); x <= InfiniteChunkBounds.x - 1; x++)
+                        {
+                            if (!Chunks.ContainsKey((x, y, z)))
+                                Chunks[(x, y, z)] = Instantiate(ChunkPrefab, transform, false).GetComponent<Chunk>();
+                            Chunks[(x, y, z)].Initialize((x, y, z), this);
+                        }
+            }
+            else _isFirstPass = true;
         }
-        
+
+        Queue<Chunk> _freeChunks = new();
+        private int slice = 0;
+        private void Update()
+        {
+            foreach (Chunk chunk in Chunks.Values)
+            {
+                chunk.CheckGeneration();
+            }
+
+            if (!IsInfinite)
+                return;
+            
+            _infiniteUpdateTimer += Time.deltaTime;
+            if (_infiniteUpdateTimer >= InfiniteUpdateInterval)
+            {
+                _infiniteUpdateTimer = 0;
+
+                float radunit = ChunkSize * VoxelSize;
+                Vector3 halfchunk = radunit * 0.5f * Vector3.one;
+                Vector3 camoffset = _cameraTransform.position- (transform.position-halfchunk);
+                Vector3 camChunkPos = camoffset / radunit;
+                Vector3Int ccpos = new Vector3Int(Mathf.RoundToInt(camChunkPos.x), Mathf.RoundToInt(camChunkPos.y), Mathf.RoundToInt(camChunkPos.z));
+                //Debug.Log(ccpos);
+                //float rad2 = ((InfiniteChunkRadius*radunit)*(InfiniteChunkRadius*radunit)) + ((radunit * 0.5f) * (radunit * 0.5f));
+
+                if (slice == 0)
+                {
+                    foreach (Chunk chunk in Chunks.Values)
+                    {
+                        Vector3Int cpos = new Vector3Int(chunk.Position.x, chunk.Position.y, chunk.Position.z);
+
+                        if ((ccpos - cpos).sqrMagnitude > InfiniteChunkRadius * InfiniteChunkRadius)
+                        {
+                            if (!_freeChunks.Contains(chunk))
+                                _freeChunks.Enqueue(chunk);
+                            //chunk.CanBeReused = true;
+                        }
+                    }
+                    foreach (Chunk chunk in _freeChunks)
+                        Chunks.Remove(chunk.Position);
+
+                    slice++;
+                    return;
+                }
+                
+                int s = 1;
+                for (int z = ccpos.z-InfiniteChunkRadius; z < ccpos.z +InfiniteChunkRadius; z++)
+                    for (int y = ccpos.y-InfiniteChunkRadius; y < ccpos.y +InfiniteChunkRadius; y++)
+                        for (int x = ccpos.x - InfiniteChunkRadius; x < ccpos.x + InfiniteChunkRadius; x++)
+                        {
+                            if((InfiniteChunkBounds.x>0 && ( x<-InfiniteChunkBounds.x || x>InfiniteChunkBounds.x)) || (InfiniteChunkBounds.y>0 && (y<-InfiniteChunkBounds.y || y>InfiniteChunkBounds.y)) || (InfiniteChunkBounds.z>0 && (z<-InfiniteChunkBounds.z || z>InfiniteChunkBounds.z)))
+                                continue;
+
+                            Vector3 cpos = new Vector3(x, y, z);
+                            if ((ccpos - cpos).sqrMagnitude > InfiniteChunkRadius*InfiniteChunkRadius)
+                                continue;
+
+                            if (Chunks.ContainsKey((x, y, z)))
+                                continue;
+                            
+                            if (!_isFirstPass)
+                            {
+                                s++;
+                                if (s == 8)
+                                    s = 1;
+                                if (s == slice)
+                                    continue;
+                                if ((ccpos - cpos).sqrMagnitude < (InfiniteChunkRadius - 2) * (InfiniteChunkRadius - 2))
+                                    continue;
+                            }
+
+                            if (_freeChunks.TryDequeue(out Chunk reuse))
+                            {
+                                Chunks.Add((x, y, z), reuse);
+                                reuse.Initialize((x, y, z), this);
+                            }
+                            else
+                            {
+                                //Debug.Log($"No available chunks to re-use at {x}, {y}, {z}");
+                                Chunks[(x, y, z)] = Instantiate(ChunkPrefab, transform, false).GetComponent<Chunk>();
+                                Chunks[(x, y, z)].Initialize((x, y, z), this);
+                            }
+                        }
+                    
+                _isFirstPass = false;
+                slice++;
+                if (slice == 8)
+                    slice = 0;
+            }
+        }
+
         public void GenerateVoxel(int x, int y, int z, ref Voxel voxel)
         {
             _voxelDataGenerator.GenerateVoxel(x, y, z, ref voxel);

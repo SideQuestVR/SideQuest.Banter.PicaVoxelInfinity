@@ -18,6 +18,7 @@ using UnityEditor;
 using UnityEngine;
 using System.Collections;
 using System.Threading;
+using JetBrains.Annotations;
 using UnityEngine.UI;
 
 namespace PicaVoxel
@@ -28,11 +29,7 @@ namespace PicaVoxel
         
         public Volume Volume
         {
-            get
-            {
-                if (_volume) return _volume;
-                return _volume = GetComponentInParent<Volume>();
-            }
+            get => _volume;
         }
         private Volume _volume;
 
@@ -47,14 +44,17 @@ namespace PicaVoxel
             Ready
         }
 
-        private bool _isDataDirty = true;
+        // Is chunk free to be reused?
+        public bool CanBeReused;
+        
+        private bool _isDataDirty = false;
         private bool _isMeshDirty = false;
         private ChunkStatus status = ChunkStatus.NoChange;
 
-        private List<Vector3> vertices = new List<Vector3>();
-        private List<Vector4> uvs = new List<Vector4>();
-        private List<Color32> colors = new List<Color32>();
-        private List<int> indexes = new List<int>();
+        private List<Vector3> vertices = new List<Vector3>(2048);
+        private List<Vector4> uvs = new List<Vector4>(2048);
+        private List<Color32> colors = new List<Color32>(2048);
+        private List<int> indexes = new List<int>(2048);
 
         private MeshFilter mf;
         private MeshCollider mc;
@@ -63,14 +63,24 @@ namespace PicaVoxel
         private bool hasCreatedRuntimeMesh = false;
         private bool hasCreatedRuntimeColMesh = false;
         private bool updateColliderNextFrame = false;
+        private bool _disableMrNextFrame= false;
         /////////////////////////////////////////////////////////////////
         
-        public void Initialize((int, int, int) pos)
+        public void Initialize((int, int, int) pos, Volume parentVolume)
         {
+            _volume = parentVolume;
+            if (mf is null) mf = GetComponent<MeshFilter>();
+            if (mr is null) mr = GetComponent<MeshRenderer>();
+            if (mc is null) mc = GetComponent<MeshCollider>();
+            mr.enabled = false;
+            mc.enabled = false;
             Position = pos;
-            transform.position = new Vector3((Position.x*Volume.XChunkSize)-(Volume.XChunkSize*0.5f), (Position.y*Volume.YChunkSize)-(Volume.YChunkSize*0.5f), (Position.z*Volume.ZChunkSize)-(Volume.ZChunkSize*0.5f)) * Volume.VoxelSize;
+            transform.position = new Vector3((Position.x*Volume.ChunkSize)-(Volume.ChunkSize*0.5f), (Position.y*Volume.ChunkSize)-(Volume.ChunkSize*0.5f), (Position.z*Volume.ChunkSize)-(Volume.ChunkSize*0.5f)) * Volume.VoxelSize;
             if(Voxels==null || Voxels.Length==0)
-                Voxels = new Voxel[Volume.XChunkSize * Volume.YChunkSize * Volume.ZChunkSize];
+                Voxels = new Voxel[Volume.ChunkSize * Volume.ChunkSize * Volume.ChunkSize];
+            if (mf.sharedMesh is null)
+                mf.sharedMesh = new Mesh();
+            _isDataDirty = true;
             #if UNITY_EDITOR
             gameObject.name = $"Chunk {Position.x},{Position.y},{Position.z}";
             #endif
@@ -84,38 +94,53 @@ namespace PicaVoxel
                 return;
             }
 
+            bool hasData = false;
             //Debug.Log($"Chunk {Position.x},{Position.y},{Position.z} is doing data gen");
-            for (int z = 0; z < Volume.ZChunkSize; z++)
-                for (int y = 0; y < Volume.YChunkSize; y++)
-                    for (int x = 0; x < Volume.XChunkSize; x++)
-                        Volume.GenerateVoxel(x+(Volume.XChunkSize*Position.x),y+(Volume.YChunkSize*Position.y),z+(Volume.ZChunkSize*Position.z),ref Voxels[x + Volume.XChunkSize * (y + Volume.YChunkSize * z)]);
+            for (int z = 0; z < Volume.ChunkSize; z++)
+                for (int y = 0; y < Volume.ChunkSize; y++)
+                    for (int x = 0; x < Volume.ChunkSize; x++)
+                    {
+                        Volume.GenerateVoxel(x + (Volume.ChunkSize * Position.x), y + (Volume.ChunkSize * Position.y), z + (Volume.ChunkSize * Position.z), ref Voxels[x + Volume.ChunkSize * (y + Volume.ChunkSize * z)]);
+                        if(!hasData && Voxels[x + Volume.ChunkSize * (y + Volume.ChunkSize * z)].Active)
+                            hasData = true;
+                    }
             //Debug.Log($"Chunk {Position.x},{Position.y},{Position.z} is finished data gen");
 
-            _isMeshDirty = true;
+            if (hasData)
+                _isMeshDirty = true;
+            else 
+                _disableMrNextFrame = true;
         }
 
         public Voxel? GetVoxel((int x, int y, int z) pos)
         {
-            int i = pos.x + Volume.XChunkSize * (pos.y + Volume.YChunkSize * pos.z);
+            int i = pos.x + Volume.ChunkSize * (pos.y + Volume.ChunkSize * pos.z);
             if(i<0 || i>=Voxels.Length) return null;
 
             return Voxels[i];
         }
         
-        private void Update()
+        public void CheckGeneration()
         {
             if (_isDataDirty)
             {
                 //Debug.Log($"Chunk {Position.x},{Position.y},{Position.z} has dirty data");
 
                 _isDataDirty = false;
-                
-                if(!ThreadPool.QueueUserWorkItem(delegate
-                       {
-                           GenerateData();
-                       })
-                    ) 
-                    GenerateData();
+
+                if (!ThreadPool.QueueUserWorkItem(delegate
+                    {
+                        GenerateData();
+                    })
+                   )
+                    _isDataDirty = true;
+            }
+            
+            if (_disableMrNextFrame)
+            {
+                mr.enabled = false;
+                mc.enabled = false;
+                _disableMrNextFrame= false;
             }
             
             if (status == ChunkStatus.NoChange && _isMeshDirty)
@@ -131,6 +156,7 @@ namespace PicaVoxel
                 if (!_isMeshDirty)
                 {
                     SetMesh();
+                    mr.enabled = true;
                 }
                 else
                 {
@@ -138,7 +164,7 @@ namespace PicaVoxel
                     GenerateMesh(false);
                 }
             }
-
+            
             if (updateColliderNextFrame)
             {
                 UpdateCollider();
@@ -147,9 +173,6 @@ namespace PicaVoxel
         
         public void GenerateMesh(bool immediate)
         {
-            if (mf == null) mf = GetComponent<MeshFilter>();
-            if (mc == null) mc = GetComponent<MeshCollider>();
-            if (mr == null) mr = GetComponent<MeshRenderer>();
             if (immediate)
             {
                 GenerateMeshActual(Volume.MeshingMode);
@@ -188,55 +211,34 @@ namespace PicaVoxel
          
             status = ChunkStatus.Ready;
         }
-        
+
+        private Chunk[] _neighbours = new Chunk[27];
         private void GenerateMeshActual(MeshingMode meshMode)
         {
-           switch (meshMode)
-           {
+            for(int x=0;x<3;x++)
+                for(int y=0;y<3;y++)
+                    for(int z=0;z<3;z++)
+                        _neighbours[x + 3 * (y + 3 * z)] = Volume.GetChunk((Position.x+(x-1),Position.y+(y-1),Position.z+(z-1)));
+            
+            switch (meshMode)
+            {
                 case MeshingMode.Culled:
-                    MeshGenerator.GenerateCulled(vertices, uvs, colors, indexes, ref Voxels, this, Volume.VoxelSize, 0f,0, 0, 0, Volume.XChunkSize, Volume.YChunkSize, Volume.ZChunkSize, Volume.XChunkSize-1, Volume.YChunkSize-1, Volume.ZChunkSize-1, Volume.SelfShadingIntensity);
+                    MeshGenerator.GenerateCulled(vertices, uvs, colors, indexes, ref Voxels, this, _neighbours, Volume.VoxelSize, 0f,0, 0, 0, Volume.ChunkSize, Volume.ChunkSize, Volume.ChunkSize, Volume.ChunkSize-1, Volume.ChunkSize-1, Volume.ChunkSize-1, Volume.SelfShadingIntensity);
                     break;
                 case MeshingMode.Greedy:
-                    MeshGenerator.GenerateGreedy(vertices, uvs, colors, indexes, ref Voxels, this,Volume.VoxelSize, 0f,0, 0, 0, Volume.XChunkSize, Volume.YChunkSize, Volume.ZChunkSize, Volume.XChunkSize-1, Volume.YChunkSize-1, Volume.ZChunkSize-1, Volume.SelfShadingIntensity);
+                    MeshGenerator.GenerateGreedy(vertices, uvs, colors, indexes, ref Voxels, this,_neighbours,Volume.VoxelSize, 0f,0, 0, 0, Volume.ChunkSize, Volume.ChunkSize, Volume.ChunkSize, Volume.ChunkSize-1, Volume.ChunkSize-1, Volume.ChunkSize-1, Volume.SelfShadingIntensity);
                     break;
                 case MeshingMode.Marching:
-                    MeshGenerator.GenerateMarching(vertices, uvs, colors, indexes, ref Voxels, this,Volume.VoxelSize, 0, 0, 0, Volume.XChunkSize, Volume.YChunkSize, Volume.ZChunkSize, Volume.XChunkSize-1, Volume.YChunkSize-1, Volume.ZChunkSize-1, Volume.SelfShadingIntensity);
+                    MeshGenerator.GenerateMarching(vertices, uvs, colors, indexes, ref Voxels, this,_neighbours,Volume.VoxelSize, 0, 0, 0, Volume.ChunkSize, Volume.ChunkSize, Volume.ChunkSize, Volume.ChunkSize-1, Volume.ChunkSize-1, Volume.ChunkSize-1, Volume.SelfShadingIntensity);
                     break;
-           }    
+            }    
         }
 
         private void SetMesh()
         {
             if (vertices.Count == 0)
             {
-                if (Application.isPlaying && !hasCreatedRuntimeMesh)
-                {
-                    if(mf.sharedMesh!=null)
-                        mf.sharedMesh = (Mesh)Instantiate(mf.sharedMesh);
-                    hasCreatedRuntimeMesh = true;
-                }
-
-                if (mf.sharedMesh != null)
-                {
-                    mf.sharedMesh.Clear();
-                    mf.sharedMesh = null;
-                }
-                if (mc != null && Volume.CollisionMode != CollisionMode.None)
-                {
-                    mc.sharedMesh = null;
-                }
                 return;
-            }
-
-            if (mf.sharedMesh == null)
-            {
-                mf.sharedMesh = new Mesh();
-            }
-
-            if (Application.isPlaying && !hasCreatedRuntimeMesh)
-            {
-                mf.sharedMesh = (Mesh)Instantiate(mf.sharedMesh);
-                hasCreatedRuntimeMesh = true;
             }
 
             mr.shadowCastingMode = Volume.CastShadows;
@@ -262,6 +264,7 @@ namespace PicaVoxel
             mc.sharedMesh = null;
             mf.sharedMesh.RecalculateBounds();
             mc.sharedMesh = mf.sharedMesh;
+            mc.enabled = true;
             updateColliderNextFrame = false;
         }
 

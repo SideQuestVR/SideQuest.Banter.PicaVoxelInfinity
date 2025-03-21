@@ -32,7 +32,7 @@ namespace PicaVoxel
             if (_noise == null)
             {
                 _noise = new FastNoiseLite(seed: Seed);
-                _noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
+                _noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
                 _noise.SetFrequency(0.1f);
 
                 _seaLevel = (HeightMax - HeightMin) - HeightMin;
