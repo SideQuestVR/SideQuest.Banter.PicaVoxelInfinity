@@ -402,47 +402,54 @@ namespace PicaVoxel
             int ycs = chunk.Volume.ChunkSize;
             int zcs  = chunk.Volume.ChunkSize;
 
-            (int x, int y, int z) ccp = (1,1,1);
-            (int x, int y, int z) vcp = (x, y, z);
+            int ccpx = 1;
+            int ccpy = 1;
+            int ccpz = 1;
+
+            int vcpx = x;
+            int vcpy = y;
+            int vcpz = z;
+            //(int x, int y, int z) ccp = (1,1,1);
+            //(int x, int y, int z) vcp = (x, y, z);
             
             if (x < 0)
             {
-                ccp.x =0;
-                vcp.x = xcs - 1;
+                ccpx =0;
+                vcpx = xcs - 1;
             }
 
             if (x > ub0)
             {
-                ccp.x = 2;
-                vcp.x = 0;
+                ccpx = 2;
+                vcpx = 0;
             }
             
             if (y < 0)
             {
-                ccp.y =0;
-                vcp.y = ycs - 1;
+                ccpy =0;
+                vcpy = ycs - 1;
             }
 
             if (y > ub1)
             {
-                ccp.y =2;
-                vcp.y = 0;
+                ccpy =2;
+                vcpy = 0;
             }
             
             if (z < 0)
             {
-                ccp.z =0;
-                vcp.z = zcs - 1;
+                ccpz =0;
+                vcpz = zcs - 1;
             }
 
             if (z > ub2)
             {
-                ccp.z = 2;
-                vcp.z = 0;
+                ccpz = 2;
+                vcpz = 0;
             }
 
-            Chunk cc = nbs[ccp.x + 3 * (ccp.y + 3 * ccp.z)];
-            return (cc is not null) && cc.Voxels[vcp.x + xcs * (vcp.y + ycs * vcp.z)].Active;
+            Chunk cc = nbs[ccpx + 3 * (ccpy + 3 * ccpz)];
+            return (cc is not null) && cc.Voxels[vcpx + xcs * (vcpy + ycs * vcpz)].Active;
             
             //|| x > ub0 || y < 0 || y > ub1 || z < 0 || z > ub2) return false;
             return invoxels[x + (ub0 + 1)*(y + (ub1 + 1)*z)].Active;

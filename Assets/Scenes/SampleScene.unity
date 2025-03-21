@@ -229,7 +229,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
       propertyPath: SelfShadingIntensity
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
       propertyPath: InfiniteChunkBounds.x
