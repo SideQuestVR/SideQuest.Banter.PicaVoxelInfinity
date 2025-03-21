@@ -164,8 +164,8 @@ namespace PicaVoxel
                 //Debug.Log(ccpos);
                 //float rad2 = ((InfiniteChunkRadius*radunit)*(InfiniteChunkRadius*radunit)) + ((radunit * 0.5f) * (radunit * 0.5f));
 
-                // If the camera moves more than a couple of chunks in one go, regenerate the whole lot starting with the chunk at camera position
-                if ((camoffset - _lastCamOffset).magnitude > radunit * 2)
+                // If the camera moves more than a chunk in one go, regenerate the whole lot starting with the chunk at camera position
+                if ((camoffset - _lastCamOffset).magnitude > radunit)
                 {
                     foreach (Chunk chunk in Chunks.Values)
                     {
@@ -179,6 +179,7 @@ namespace PicaVoxel
                     thisUpdateccpos=ccpos;
                     if (_freeChunks.TryDequeue(out Chunk reuse))
                     {
+                        Chunks.Add((ccpos.x,ccpos.y,ccpos.z), reuse);
                         reuse.Initialize((ccpos.x,ccpos.y,ccpos.z), this);
                     }
                 }
