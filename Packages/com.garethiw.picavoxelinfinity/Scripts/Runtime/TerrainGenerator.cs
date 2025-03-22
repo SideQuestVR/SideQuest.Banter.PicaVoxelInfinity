@@ -20,7 +20,6 @@ namespace PicaVoxel
         public int HeightMax = 44;
         public int HeightMin = 20;
         public int BedrockHeight = -32;
-        public float Scale = 0.25f;
         /////////////
         
         private FastNoiseLite _noise;
@@ -32,14 +31,20 @@ namespace PicaVoxel
             if (_noise == null)
             {
                 _noise = new FastNoiseLite(seed: Seed);
-                _noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-                _noise.SetFrequency(0.1f);
+                _noise.SetNoiseType(FastNoiseLite.NoiseType.Value);
+                _noise.SetFrequency(0.05f);
+                _noise.SetDomainWarpType(FastNoiseLite.DomainWarpType.BasicGrid);
+                _noise.SetDomainWarpAmp(50f);
+                _noise.SetFractalType(FastNoiseLite.FractalType.DomainWarpProgressive);
+                _noise.SetFractalGain(0.5f);
+                _noise.SetFractalOctaves(4);
+                _noise.SetFractalLacunarity(2.5f);
 
                 _seaLevel = (HeightMax - HeightMin) - HeightMin;
             }
 
             voxel.Color = Color.white;
-            float val = _noise.GetNoise(x*Scale, z*Scale);
+            float val = _noise.GetNoise(x, z);
             val = (val + 1) * 0.5f;
             // if(Random.Range(0,100)==0)
             //     Debug.Log(val);

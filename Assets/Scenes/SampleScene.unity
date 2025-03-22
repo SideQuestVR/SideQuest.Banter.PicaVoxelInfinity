@@ -142,7 +142,6 @@ MonoBehaviour:
   HeightMax: 44
   HeightMin: 20
   BedrockHeight: -32
-  Scale: 0.25
 --- !u!1001 &223527215
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -229,7 +228,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
       propertyPath: SelfShadingIntensity
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
       propertyPath: InfiniteChunkBounds.x
@@ -460,7 +459,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Direction: {x: 1, y: 0, z: 1}
-  Speed: 5
+  Speed: 1
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0

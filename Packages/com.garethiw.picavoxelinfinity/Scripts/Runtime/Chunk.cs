@@ -85,6 +85,7 @@ namespace PicaVoxel
             #endif
         }
 
+        private bool _hasData = false;
         private void GenerateData()
         {
             if (!Volume.IsDataReady)
@@ -93,21 +94,19 @@ namespace PicaVoxel
                 return;
             }
 
-            bool hasData = false;
+            _hasData = false;
             //Debug.Log($"Chunk {Position.x},{Position.y},{Position.z} is doing data gen");
             for (int z = 0; z < Volume.ChunkSize; z++)
                 for (int y = 0; y < Volume.ChunkSize; y++)
                     for (int x = 0; x < Volume.ChunkSize; x++)
                     {
                         Volume.GenerateVoxel(x + (Volume.ChunkSize * Position.x), y + (Volume.ChunkSize * Position.y), z + (Volume.ChunkSize * Position.z), ref Voxels[x + Volume.ChunkSize * (y + Volume.ChunkSize * z)]);
-                        if(!hasData && Voxels[x + Volume.ChunkSize * (y + Volume.ChunkSize * z)].Active)
-                            hasData = true;
+                        if(!_hasData && Voxels[x + Volume.ChunkSize * (y + Volume.ChunkSize * z)].Active)
+                            _hasData = true;
                     }
             //Debug.Log($"Chunk {Position.x},{Position.y},{Position.z} is finished data gen");
 
-            if (hasData)
-                _isMeshDirty = true;
-            else 
+            if (!_hasData)
                 _disableMrNextFrame = true;
         }
 
@@ -129,7 +128,18 @@ namespace PicaVoxel
 
                 if (!ThreadPool.QueueUserWorkItem(delegate
                     {
-                        GenerateData();
+                        try
+                        {
+                            GenerateData();
+                            if(!_hasData)
+                                return;
+                            Thread.Sleep(25);
+                            GenerateMeshThreaded(Volume.MeshingMode);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogException(ex);
+                        }
                     })
                    )
                     _isDataDirty = true;
