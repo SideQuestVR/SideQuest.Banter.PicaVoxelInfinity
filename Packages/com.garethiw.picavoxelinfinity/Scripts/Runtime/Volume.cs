@@ -74,6 +74,8 @@ namespace PicaVoxel
         public int InfiniteChunkRadius;
         public Vector3Int InfiniteChunkBounds = Vector3Int.zero;
         public float InfiniteUpdateInterval = 0.25f;
+        public int InfiniteUpdateSlicing = 8;
+        public int InfiniteChunkRadiusUpdateMargin = 3;
         
         public int GenerationSeed;
 
@@ -139,6 +141,7 @@ namespace PicaVoxel
 
         Queue<Chunk> _freeChunks = new();
         private int slice = 0;
+        private bool dataPass = true;
         Vector3Int thisUpdateccpos = Vector3Int.zero;
         private void Update()
         {
@@ -175,6 +178,7 @@ namespace PicaVoxel
                     foreach (Chunk chunk in _freeChunks)
                         Chunks.Remove(chunk.Position);
                     _isFirstPass = true;
+                    dataPass = true;
                     slice = 1;
                     thisUpdateccpos=ccpos;
                     if (_freeChunks.TryDequeue(out Chunk reuse))
@@ -218,19 +222,25 @@ namespace PicaVoxel
                             Vector3 cpos = new Vector3(x, y, z);
                             if ((thisUpdateccpos - cpos).sqrMagnitude > InfiniteChunkRadius*InfiniteChunkRadius)
                                 continue;
-
-                            if (Chunks.ContainsKey((x, y, z)))
-                                continue;
                             
                             if (!_isFirstPass)
                             {
                                 s++;
-                                if (s == 8)
+                                if (s == InfiniteUpdateSlicing)
                                     s = 1;
-                                if (s == slice)
+                                if (s != slice)
                                     continue;
-                                if ((thisUpdateccpos - cpos).sqrMagnitude < (InfiniteChunkRadius - 2) * (InfiniteChunkRadius - 2))
+                                if ((thisUpdateccpos - cpos).sqrMagnitude < (InfiniteChunkRadius - InfiniteChunkRadiusUpdateMargin) * (InfiniteChunkRadius - InfiniteChunkRadiusUpdateMargin))
                                     continue;
+                            }
+
+                            if (Chunks.ContainsKey((x, y, z)))
+                            {
+                                if (!dataPass)
+                                {
+                                    Chunks[(x, y, z)].SetMeshDirty();
+                                }
+                                continue;
                             }
 
                             if (_freeChunks.TryDequeue(out Chunk reuse))
@@ -245,11 +255,19 @@ namespace PicaVoxel
                                 Chunks[(x, y, z)].Initialize((x, y, z), this);
                             }
                         }
-                    
-                _isFirstPass = false;
+
+                if (_isFirstPass)
+                {
+                    if (!dataPass)
+                        _isFirstPass = false;
+                }
                 slice++;
-                if (slice == 8)
-                    slice = 0;
+                if (slice == InfiniteUpdateSlicing)
+                {
+                    slice = dataPass ? 1 : 0;
+
+                    dataPass = !dataPass;
+                }
             }
         }
 

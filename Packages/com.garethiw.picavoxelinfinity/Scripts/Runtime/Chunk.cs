@@ -131,10 +131,11 @@ namespace PicaVoxel
                         try
                         {
                             GenerateData();
-                            if(!_hasData)
-                                return;
-                            Thread.Sleep(25);
-                            GenerateMeshThreaded(Volume.MeshingMode);
+                            // The volume will set the mesh to be regenerated once all chunks have queued data load
+                            // if(!_hasData)
+                            //     return;
+                            // Thread.Sleep(25);
+                            // GenerateMeshThreaded(Volume.MeshingMode);
                         }
                         catch (Exception ex)
                         {
@@ -301,6 +302,13 @@ namespace PicaVoxel
 
             mc.sharedMesh.RecalculateNormals();
             mc.sharedMesh.RecalculateBounds();
+        }
+
+        public void SetMeshDirty()
+        {
+            if (!_hasData)
+                return;
+            _isMeshDirty = true;
         }
     }
 }

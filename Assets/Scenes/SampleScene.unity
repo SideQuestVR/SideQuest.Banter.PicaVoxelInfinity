@@ -244,7 +244,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
       propertyPath: InfiniteUpdateInterval
-      value: 0.25
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 6945259711021768169, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
       propertyPath: m_Name
@@ -459,7 +459,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Direction: {x: 1, y: 0, z: 1}
-  Speed: 1
+  Speed: 5
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0
