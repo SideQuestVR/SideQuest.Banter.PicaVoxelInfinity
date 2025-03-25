@@ -119,6 +119,28 @@ namespace PicaVoxel
             return Voxels[i];
         }
         
+        public Voxel? SetVoxel((int x, int y, int z) pos, Voxel newValue)
+        {
+            int i = pos.x + Volume.ChunkSize * (pos.y + Volume.ChunkSize * pos.z);
+            if(i<0 || i>=Voxels.Length) return null;
+
+            Voxels[i] = newValue;
+            GenerateMesh(true);
+            EvaluateData();
+            
+            for(int xx=0;xx<3;xx++)
+                for(int yy=0;yy<3;yy++)
+                    for (int zz = 0; zz < 3; zz++)
+                    {
+                        if (xx == Position.x && yy == Position.y && zz == Position.z)
+                            continue;
+                        Volume.GetChunk((Position.x + (xx - 1), Position.y + (yy - 1), Position.z + (zz - 1)))?.SetMeshDirty();
+                    }
+
+
+            return Voxels[i];
+        }
+        
         public void CheckGeneration()
         {
             if (_isDataDirty)
@@ -187,13 +209,20 @@ namespace PicaVoxel
             if (immediate)
             {
                 GenerateMeshActual(Volume.MeshingMode);
-                SetMesh();
-
-                if (Volume.CollisionMode != CollisionMode.None)
+                mr.enabled = _hasData;
+                if (_hasData)
                 {
-                    if(Volume.MeshColliderMeshingMode!=Volume.MeshingMode)
-                        GenerateMeshActual(Volume.MeshColliderMeshingMode);
-                    SetColliderMesh();
+                    SetMesh();
+                    if (Volume.CollisionMode != CollisionMode.None)
+                    {
+                        if(Volume.MeshColliderMeshingMode!=Volume.MeshingMode)
+                            GenerateMeshActual(Volume.MeshColliderMeshingMode);
+                        UpdateCollider();
+                    }
+                }
+                else
+                {
+                    mc.enabled = false;
                 }
             }
             else
@@ -310,6 +339,17 @@ namespace PicaVoxel
             if (!_hasData)
                 return;
             _isMeshDirty = true;
+        }
+
+        private void EvaluateData()
+        {
+            for (int z = 0; z < Volume.ChunkSize; z++)
+                for (int y = 0; y < Volume.ChunkSize; y++)
+                    for (int x = 0; x < Volume.ChunkSize; x++)
+                    {
+                        if(!_hasData && Voxels[x + Volume.ChunkSize * (y + Volume.ChunkSize * z)].Active)
+                            _hasData = true;
+                    }
         }
     }
 }
