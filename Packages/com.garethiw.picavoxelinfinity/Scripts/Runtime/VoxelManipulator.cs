@@ -15,6 +15,7 @@ namespace PicaVoxel
 
         private void Start()
         {
+            PerformAction.Enable();
             PerformAction.performed += OnPerformAction;
         }
 
