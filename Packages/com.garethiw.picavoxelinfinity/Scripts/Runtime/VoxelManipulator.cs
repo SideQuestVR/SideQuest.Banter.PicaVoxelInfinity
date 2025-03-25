@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace PicaVoxel
 {
@@ -8,11 +9,18 @@ namespace PicaVoxel
         public Vector2 RayDistanceMinMax;
         public LayerMask LayerMask;
 
+        public InputAction PerformAction;
+        
         private RaycastHit[] _hits = new RaycastHit[1];
 
         private void Start()
         {
-            //InvokeRepeating(nameof(AddVoxel), 5f, 1f);
+            PerformAction.performed += OnPerformAction;
+        }
+
+        private void OnPerformAction(InputAction.CallbackContext obj)
+        {
+            RemoveVoxel();
         }
 
         private void Update()
