@@ -119,7 +119,7 @@ namespace PicaVoxel
             return Voxels[i];
         }
         
-        public Voxel? SetVoxel((int x, int y, int z) pos, Voxel newValue)
+        public Voxel? SetVoxel((int x, int y, int z) pos, Voxel newValue, bool persist = true)
         {
             int i = pos.x + Volume.ChunkSize * (pos.y + Volume.ChunkSize * pos.z);
             if(i<0 || i>=Voxels.Length) return null;
@@ -139,6 +139,18 @@ namespace PicaVoxel
 
 
             return Voxels[i];
+        }
+        
+        public void SetVoxelByChangeEvent(VoxelChangeEventArgs e, bool persist = false)
+        {
+            Voxel v = new Voxel()
+            {
+                Active = e.VoxelActive,
+                Value = e.VoxelValue,
+                Color = e.VoxelColor
+            };
+            
+            SetVoxel((e.VoxelX,e.VoxelY,e.VoxelZ), v, persist);
         }
         
         public void CheckGeneration()
@@ -328,5 +340,6 @@ namespace PicaVoxel
                         }
                     }
         }
+        
     }
 }

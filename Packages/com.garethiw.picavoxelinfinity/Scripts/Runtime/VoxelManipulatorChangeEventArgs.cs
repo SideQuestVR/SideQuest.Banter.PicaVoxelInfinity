@@ -5,7 +5,7 @@ using UnityEngine;
 namespace PicaVoxel
 {
     [Serializable, Inspectable]
-    public class VoxelManipulatorChangeEventArgs
+    public class VoxelChangeEventArgs
     {
         [Inspectable]
         public string VolumeId;

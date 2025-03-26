@@ -22,7 +22,7 @@ namespace PicaVoxel
         [FormerlySerializedAs("PerformAction")] public InputAction AddAction;
         public InputAction RemoveAction;
 
-        public UnityEvent<VoxelManipulatorChangeEventArgs> OnManipulatorChange;
+        public UnityEvent<VoxelChangeEventArgs> OnManipulatorChange;
         
         private RaycastHit[] _hits = new RaycastHit[1];
         private Volume _selectedVolume;
@@ -95,8 +95,8 @@ namespace PicaVoxel
 
             if (v != null)
             {
-                VoxelManipulatorChangeEventArgs args = 
-                new VoxelManipulatorChangeEventArgs()
+                VoxelChangeEventArgs args = 
+                new VoxelChangeEventArgs()
                 {
                     VolumeId = _selectedVolume.Identifier,
                     ChunkX = _selectedChunk.Position.x,

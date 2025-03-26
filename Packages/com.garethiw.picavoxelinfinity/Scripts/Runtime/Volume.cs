@@ -307,7 +307,7 @@ namespace PicaVoxel
             return chunk.GetVoxel(pos);
         }
         
-        public Voxel? SetVoxelAtWorldPosition(Vector3 worldPos, Voxel newValue, out Chunk chunk, out (int x, int y, int z) pos)
+        public Voxel? SetVoxelAtWorldPosition(Vector3 worldPos, Voxel newValue, out Chunk chunk, out (int x, int y, int z) pos, bool persist=true)
         {
             pos = (0, 0, 0);
             Vector3 localPos = transform.InverseTransformPoint(worldPos);
@@ -319,9 +319,14 @@ namespace PicaVoxel
             localPos -= chunk.transform.localPosition - (Vector3.one*ChunkSize*0.5f*VoxelSize);
 
             pos = ((int)(localPos.x / (VoxelSize)), (int)(localPos.y / (VoxelSize)), (int)(localPos.z / (VoxelSize)));
-            Voxel? v = chunk.SetVoxel(pos, newValue);
+            Voxel? v = chunk.SetVoxel(pos, newValue, persist);
 
             return v;
+        }
+
+        public void SetVoxelByChangeEvent(VoxelChangeEventArgs e, bool persist = false)
+        {
+            GetChunk((e.ChunkX,e.ChunkY,e.ChunkZ))?.SetVoxelByChangeEvent(e, persist);
         }
 
         public void RegenerateMeshes(bool immediate = false)

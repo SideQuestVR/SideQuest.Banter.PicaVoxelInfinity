@@ -9,7 +9,7 @@ namespace PicaVoxel.VisualScripting
     [UnitTitle("On Voxel Manipulator Change")]
     [UnitShortTitle("On Voxel Manipulator Change")]
     [UnitCategory("Events\\PicaVoxel")]
-    public class OnVoxelManipulatorChange : EventUnit<VoxelManipulatorChangeEventArgs>
+    public class OnVoxelManipulatorChange : EventUnit<VoxelChangeEventArgs>
     {
         [DoNotSerialize]
         public ValueOutput result;
@@ -25,16 +25,16 @@ namespace PicaVoxel.VisualScripting
         {
             base.Definition();
 
-            result = ValueOutput<VoxelManipulatorChangeEventArgs>("Change");
+            result = ValueOutput<VoxelChangeEventArgs>("Change");
         }
 
-        protected override bool ShouldTrigger(Flow flow, VoxelManipulatorChangeEventArgs data)
+        protected override bool ShouldTrigger(Flow flow, VoxelChangeEventArgs data)
         {
             return true;
         }
 
         // Setting the value on our port.
-        protected override void AssignArguments(Flow flow, VoxelManipulatorChangeEventArgs data)
+        protected override void AssignArguments(Flow flow, VoxelChangeEventArgs data)
         {
             flow.SetValue(result, data);
         }
