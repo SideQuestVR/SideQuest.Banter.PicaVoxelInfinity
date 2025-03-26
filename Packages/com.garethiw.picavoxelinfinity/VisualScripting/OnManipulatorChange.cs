@@ -25,7 +25,7 @@ namespace PicaVoxel.VisualScripting
         {
             base.Definition();
 
-            result = ValueOutput<string>("Data");
+            result = ValueOutput<VoxelManipulatorChangeEventArgs>("Change");
         }
 
         protected override bool ShouldTrigger(Flow flow, VoxelManipulatorChangeEventArgs data)
@@ -36,7 +36,7 @@ namespace PicaVoxel.VisualScripting
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, VoxelManipulatorChangeEventArgs data)
         {
-            flow.SetValue(result, $"{data.Volume.name} {data.Chunk.name} {data.VoxelPosition} {data.Voxel}");
+            flow.SetValue(result, data);
         }
     }
 }
