@@ -4,7 +4,7 @@ using PicaVoxel;
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace PicaVoxelInfinity.VisualScripting
+namespace PicaVoxel.VisualScripting
 {
     [UnitTitle("On Voxel Manipulator Change")]
     [UnitShortTitle("On Voxel Manipulator Change")]
