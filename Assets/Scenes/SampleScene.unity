@@ -508,6 +508,35 @@ MonoBehaviour:
   LayerMask:
     serializedVersion: 2
     m_Bits: 1
+  VoxelValue: 0
+  VoxelColor: {r: 1, g: 1, b: 1, a: 1}
+  CursorPrefab: {fileID: 823897801914889954, guid: 9e54829b76f3712418a4e924ab987740, type: 3}
+  AddAction:
+    m_Name: Perform
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 42ffe171-b5d3-4221-904b-a889c87885d7
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 4bdcc60f-fbfb-4dc6-8b43-663c071d564d
+      m_Path: <Mouse>/leftButton
+      m_Interactions: Press
+      m_Processors: 
+      m_Groups: 
+      m_Action: Perform
+      m_Flags: 0
+    m_Flags: 0
+  RemoveAction:
+    m_Name: Remove
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: b2814d57-9b09-4c0b-aa81-de92124e7e4d
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
