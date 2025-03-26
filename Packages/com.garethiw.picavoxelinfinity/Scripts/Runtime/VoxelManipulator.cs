@@ -96,10 +96,16 @@ namespace PicaVoxel
                 VoxelManipulatorChangeEventArgs args = 
                 new VoxelManipulatorChangeEventArgs()
                 {
-                    Volume = vol,
-                    Chunk = chunk,
-                    VoxelPosition = pos,
-                    Voxel = v.Value
+                    VolumeId = _selectedVolume.Identifier,
+                    ChunkX = _selectedChunk.Position.x,
+                    ChunkY = _selectedChunk.Position.y,
+                    ChunkZ = _selectedChunk.Position.z,
+                    VoxelX = pos.x,
+                    VoxelY = pos.y,
+                    VoxelZ = pos.z,
+                    VoxelActive = v.Value.Active,
+                    VoxelValue = v.Value.Value,
+                    VoxelColor = v.Value.Color
                 };
                 OnManipulatorChange?.Invoke(args);
                 EventBus.Trigger("OnVoxelManipulatorChange", args);
@@ -162,9 +168,15 @@ namespace PicaVoxel
 
     public class VoxelManipulatorChangeEventArgs
     {
-        public Volume Volume;
-        public Chunk Chunk;
-        public (int x, int y, int z) VoxelPosition;
-        public Voxel Voxel;
+        public string VolumeId;
+        public int ChunkX;
+        public int ChunkY;
+        public int ChunkZ;
+        public int VoxelX;
+        public int VoxelY;
+        public int VoxelZ;
+        public bool VoxelActive;
+        public byte VoxelValue;
+        public Color VoxelColor;
     }
 }

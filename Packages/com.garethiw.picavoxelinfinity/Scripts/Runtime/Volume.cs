@@ -21,7 +21,6 @@ using Random = UnityEngine.Random;
 using UnityEditor;
 #endif
 
-
 namespace PicaVoxel
 {
     /// <summary>
@@ -56,6 +55,7 @@ namespace PicaVoxel
     [AddComponentMenu("PicaVoxel/PicaVoxel Volume")]
     [Serializable]
     [SelectionBase]
+    [ExecuteAlways]
     public class Volume : MonoBehaviour
     {
         public GameObject ChunkPrefab;
@@ -80,6 +80,8 @@ namespace PicaVoxel
         public int GenerationSeed;
 
         public bool IsDataReady => _voxelDataGenerator.IsReady;
+
+        public string Identifier;
         
         // Chunk generation settings
         public MeshingMode MeshingMode;
@@ -106,15 +108,20 @@ namespace PicaVoxel
         private I_VoxelDataGenerator _voxelDataGenerator;
         private bool _isFirstPass;
         private Vector3 _lastCamOffset;
-
         
-        private void Awake()
+        private void OnEnable()
         {
-            //destructBatch = new Batch(this, XSize*YSize*ZSize);
+            if (string.IsNullOrEmpty(Identifier))
+            {
+                Identifier = Guid.NewGuid().ToString();
+            }
         }
 
         private void Start()
         {
+            if (!Application.isPlaying)
+                return;
+            
             _voxelDataGenerator = GetComponent<I_VoxelDataGenerator>();
             if (_voxelDataGenerator == null)
             {
@@ -145,6 +152,9 @@ namespace PicaVoxel
         Vector3Int thisUpdateccpos = Vector3Int.zero;
         private void Update()
         {
+            if (!Application.isPlaying)
+                return;
+            
             foreach (Chunk chunk in Chunks.Values)
             {
                 chunk.CheckGeneration();

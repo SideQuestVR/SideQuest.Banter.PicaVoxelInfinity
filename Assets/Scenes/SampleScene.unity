@@ -122,154 +122,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &22875496 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6945259711021768169, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-  m_PrefabInstance: {fileID: 223527215}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &22875499
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 22875496}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 052435b43834405fae64f65ea39f880f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  HeightMax: 44
-  HeightMin: 20
-  BedrockHeight: -32
---- !u!1001 &223527215
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 5548282244791135973, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5548282244791135973, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5548282244791135973, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5548282244791135973, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5548282244791135973, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5548282244791135973, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5548282244791135973, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5548282244791135973, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5548282244791135973, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5548282244791135973, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: ChunkSize
-      value: 16
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: ChunkLayer
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: IsInfinite
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: XChunkSize
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: YChunkSize
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: ZChunkSize
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: MeshingMode
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: CollisionMode
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: GeneratorType
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: GenerationSeed
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: InfiniteChunkRadius
-      value: 12
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: SelfShadingIntensity
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: InfiniteChunkBounds.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: InfiniteChunkBounds.y
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: InfiniteChunkBounds.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: InfiniteUpdateInterval
-      value: 0.2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5643125257099105075, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: MeshColliderMeshingMode
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6945259711021768169, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      propertyPath: m_Name
-      value: PicaVoxelVolume
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6945259711021768169, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 22875499}
-  m_SourcePrefab: {fileID: 100100000, guid: 7ca31ec7178fc1c44b515a9f52309c74, type: 3}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -545,10 +397,100 @@ MonoBehaviour:
     m_Interactions: 
     m_SingletonActionBindings: []
     m_Flags: 0
+  OnManipulatorChange:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!1 &970619888
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 970619890}
+  - component: {fileID: 970619889}
+  - component: {fileID: 970619891}
+  m_Layer: 0
+  m_Name: Terrain
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &970619889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 970619888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f481c0c791c90fd44bde5912521607c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ChunkPrefab: {fileID: 5017470182543096880, guid: 174a23e42d691b147b05be17a9cdc360, type: 3}
+  ChunkSize: 16
+  VoxelSize: 1
+  Pivot: {x: 0, y: 0, z: 0}
+  IsInfinite: 1
+  InfiniteChunkRadius: 12
+  InfiniteChunkBounds: {x: 0, y: 2, z: 0}
+  InfiniteUpdateInterval: 0.2
+  InfiniteUpdateSlicing: 8
+  InfiniteChunkRadiusUpdateMargin: 3
+  GenerationSeed: 3
+  Identifier: 2336a585-8b43-4730-8870-6473bf796fa3
+  MeshingMode: 1
+  MeshColliderMeshingMode: 1
+  GenerateMeshColliderSeparately: 0
+  Material: {fileID: 2100000, guid: eabf515b7c6efa94e8382b5c5f77d6b8, type: 2}
+  PhysicMaterial: {fileID: 0}
+  CollisionTrigger: 0
+  CollisionMode: 2
+  SelfShadingIntensity: 0
+  CastShadows: 1
+  ReceiveShadows: 1
+  ChunkLayer: 0
+  ImportedFrom: 0
+  ImportedFile: 
+  ImportedMode: 0
+  ImportedCutoutColor: {r: 0, g: 0, b: 0, a: 0}
+--- !u!4 &970619890
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 970619888}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &970619891
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 970619888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 052435b43834405fae64f65ea39f880f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  HeightMax: 44
+  HeightMin: 20
+  BedrockHeight: -32
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 963194228}
   - {fileID: 705507995}
-  - {fileID: 223527215}
+  - {fileID: 970619890}
