@@ -297,17 +297,19 @@ namespace PicaVoxel
             return chunk.GetVoxel(pos);
         }
         
-        public Voxel? SetVoxelAtWorldPosition(Vector3 worldPos, Voxel newValue)
+        public Voxel? SetVoxelAtWorldPosition(Vector3 worldPos, Voxel newValue, out Chunk chunk, out (int x, int y, int z) pos)
         {
+            pos = (0, 0, 0);
             Vector3 localPos = transform.InverseTransformPoint(worldPos);
             localPos -= Vector3.one*ChunkSize*0.5f*VoxelSize;
-            Chunk chunk = GetChunk(((int)(Mathf.Ceil(localPos.x/(ChunkSize*VoxelSize))), (int)(Mathf.Ceil(localPos.y/(ChunkSize*VoxelSize))), (int)Mathf.Ceil((localPos.z/(ChunkSize*VoxelSize)))));
+            chunk = GetChunk(((int)(Mathf.Ceil(localPos.x/(ChunkSize*VoxelSize))), (int)(Mathf.Ceil(localPos.y/(ChunkSize*VoxelSize))), (int)Mathf.Ceil((localPos.z/(ChunkSize*VoxelSize)))));
             if (!chunk)
                 return null;
 
             localPos -= chunk.transform.localPosition - (Vector3.one*ChunkSize*0.5f*VoxelSize);
 
-            Voxel? v = chunk.SetVoxel(((int)(localPos.x / VoxelSize), (int)(localPos.y / VoxelSize), (int)(localPos.z / VoxelSize)), newValue);
+            pos = ((int)(localPos.x / (VoxelSize)), (int)(localPos.y / (VoxelSize)), (int)(localPos.z / (VoxelSize)));
+            Voxel? v = chunk.SetVoxel(pos, newValue);
 
             return v;
         }

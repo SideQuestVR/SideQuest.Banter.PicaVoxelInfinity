@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 
@@ -17,6 +18,8 @@ namespace PicaVoxel
         
         [FormerlySerializedAs("PerformAction")] public InputAction AddAction;
         public InputAction RemoveAction;
+
+        public UnityEvent<ChangeEventArgs> OnManipulatorChange;
         
         private RaycastHit[] _hits = new RaycastHit[1];
         private Volume _selectedVolume;
@@ -83,9 +86,18 @@ namespace PicaVoxel
             if (vol.GetVoxelAtWorldPosition(_hits[0].point + (ray.direction * 0.05f), out Chunk _, out (int x, int y, int z) _) == null)
                 return false;
             
-            Voxel? v = vol.SetVoxelAtWorldPosition(_hits[0].point - (ray.direction * 0.05f), new Voxel(){Active = true, Value = VoxelValue, Color=VoxelColor});
+            Voxel? v = vol.SetVoxelAtWorldPosition(_hits[0].point - (ray.direction * 0.05f), new Voxel(){Active = true, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
 
             _lastAction = 0;
+            
+            if(v!=null)
+                OnManipulatorChange?.Invoke(new ChangeEventArgs()
+                {
+                    Volume = vol,
+                    Chunk = chunk,
+                    VoxelPosition = pos,
+                    Voxel = v.Value
+                });
             
             return v!=null;
         }
@@ -97,7 +109,7 @@ namespace PicaVoxel
             Volume vol = VolumeRaycast(ray);
             if (!vol) return false;
 
-            Voxel? v = vol.SetVoxelAtWorldPosition(_hits[0].point + (ray.direction * 0.05f), new Voxel(){Active = false});
+            Voxel? v = vol.SetVoxelAtWorldPosition(_hits[0].point + (ray.direction * 0.05f), new Voxel(){Active = false}, out Chunk chunk, out (int x, int y, int z) pos);
 
             _lastAction = 1;
             
@@ -135,5 +147,13 @@ namespace PicaVoxel
             
             return null;
         }
+    }
+
+    public class ChangeEventArgs
+    {
+        public Volume Volume;
+        public Chunk Chunk;
+        public (int x, int y, int z) VoxelPosition;
+        public Voxel Voxel;
     }
 }
