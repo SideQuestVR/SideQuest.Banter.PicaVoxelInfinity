@@ -307,33 +307,6 @@ namespace PicaVoxel
             updateColliderNextFrame = false;
         }
 
-        private void SetColliderMesh()
-        {
-            if (vertices.Count == 0)
-            {
-                if (mc.sharedMesh != null)
-                {
-                    mc.sharedMesh.Clear();
-                    mc.sharedMesh = null;
-                }
-                return;
-            }
-
-            if (mc.sharedMesh == null || (Application.isPlaying && !hasCreatedRuntimeColMesh))
-            {
-                mc.sharedMesh = new Mesh();
-                if (Application.isPlaying) hasCreatedRuntimeColMesh = true;
-            }
-            mc.sharedMesh.Clear();
-            mc.sharedMesh.SetVertices(vertices);
-            mc.sharedMesh.SetColors(colors);
-            mc.sharedMesh.SetUVs(0, uvs);
-            mc.sharedMesh.SetTriangles(indexes, 0);
-
-            mc.sharedMesh.RecalculateNormals();
-            mc.sharedMesh.RecalculateBounds();
-        }
-
         public void SetMeshDirty()
         {
             if (!_hasData)
