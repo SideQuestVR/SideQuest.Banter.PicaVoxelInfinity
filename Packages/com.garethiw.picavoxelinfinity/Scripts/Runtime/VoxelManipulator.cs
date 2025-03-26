@@ -12,6 +12,8 @@ namespace PicaVoxel
         public Vector2 RayDistanceMinMax;
         public LayerMask LayerMask;
 
+        public int NumberOfTiles = 5;
+        
         public byte VoxelValue = 0;
         public Color VoxelColor = Color.white;
 
@@ -162,7 +164,7 @@ namespace PicaVoxel
 
         public void SetVoxelValue(int val)
         {
-            VoxelValue = (byte)val;
+            VoxelValue = (byte)Math.Clamp(val, 0, NumberOfTiles);
         }
     }
 
