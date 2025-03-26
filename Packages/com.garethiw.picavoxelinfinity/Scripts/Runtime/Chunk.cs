@@ -125,8 +125,8 @@ namespace PicaVoxel
             if(i<0 || i>=Voxels.Length) return null;
 
             Voxels[i] = newValue;
-            GenerateMesh(true);
             EvaluateData();
+            GenerateMesh(true);
             
             for(int xx=0;xx<3;xx++)
                 for(int yy=0;yy<3;yy++)
@@ -343,12 +343,16 @@ namespace PicaVoxel
 
         private void EvaluateData()
         {
+            _hasData = false;
             for (int z = 0; z < Volume.ChunkSize; z++)
                 for (int y = 0; y < Volume.ChunkSize; y++)
                     for (int x = 0; x < Volume.ChunkSize; x++)
                     {
-                        if(!_hasData && Voxels[x + Volume.ChunkSize * (y + Volume.ChunkSize * z)].Active)
+                        if (!_hasData && Voxels[x + Volume.ChunkSize * (y + Volume.ChunkSize * z)].Active)
+                        {
                             _hasData = true;
+                            return;
+                        }
                     }
         }
     }
