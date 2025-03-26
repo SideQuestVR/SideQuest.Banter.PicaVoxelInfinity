@@ -168,6 +168,7 @@ namespace PicaVoxel
         }
     }
 
+    [Inspectable]
     public class VoxelManipulatorChangeEventArgs
     {
         public string VolumeId;
