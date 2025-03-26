@@ -167,19 +167,4 @@ namespace PicaVoxel
             VoxelValue = (byte)Math.Clamp(val, 0, NumberOfTiles);
         }
     }
-
-    [Inspectable]
-    public class VoxelManipulatorChangeEventArgs
-    {
-        public string VolumeId;
-        public int ChunkX;
-        public int ChunkY;
-        public int ChunkZ;
-        public int VoxelX;
-        public int VoxelY;
-        public int VoxelZ;
-        public bool VoxelActive;
-        public byte VoxelValue;
-        public Color VoxelColor;
-    }
 }
