@@ -36,7 +36,7 @@ namespace PicaVoxelInfinity.VisualScripting
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, VoxelManipulatorChangeEventArgs data)
         {
-            flow.SetValue(result, data);
+            flow.SetValue(result, $"{data.Volume.name} {data.Chunk.name} {data.VoxelPosition} {data.Voxel}");
         }
     }
 }

@@ -69,6 +69,10 @@ namespace PicaVoxel
             return bytes;
         }
 
+        public override string ToString()
+        {
+            return $"A: {Active}, V: {Value}, C: {Color}";
+        }
     }
 
 

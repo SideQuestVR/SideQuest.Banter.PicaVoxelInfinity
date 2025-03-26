@@ -153,6 +153,11 @@ namespace PicaVoxel
             
             return null;
         }
+
+        public void SetVoxelValue(int val)
+        {
+            VoxelValue = (byte)val;
+        }
     }
 
     public class VoxelManipulatorChangeEventArgs
