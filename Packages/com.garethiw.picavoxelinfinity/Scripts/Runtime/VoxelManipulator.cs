@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -19,7 +20,7 @@ namespace PicaVoxel
         [FormerlySerializedAs("PerformAction")] public InputAction AddAction;
         public InputAction RemoveAction;
 
-        public UnityEvent<ChangeEventArgs> OnManipulatorChange;
+        public UnityEvent<VoxelManipulatorChangeEventArgs> OnManipulatorChange;
         
         private RaycastHit[] _hits = new RaycastHit[1];
         private Volume _selectedVolume;
@@ -89,16 +90,21 @@ namespace PicaVoxel
             Voxel? v = vol.SetVoxelAtWorldPosition(_hits[0].point - (ray.direction * 0.05f), new Voxel(){Active = true, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
 
             _lastAction = 0;
-            
-            if(v!=null)
-                OnManipulatorChange?.Invoke(new ChangeEventArgs()
+
+            if (v != null)
+            {
+                VoxelManipulatorChangeEventArgs args = 
+                new VoxelManipulatorChangeEventArgs()
                 {
                     Volume = vol,
                     Chunk = chunk,
                     VoxelPosition = pos,
                     Voxel = v.Value
-                });
-            
+                };
+                OnManipulatorChange?.Invoke(args);
+                EventBus.Trigger("OnVoxelManipulatorChange", args);
+            }
+
             return v!=null;
         }
         
@@ -149,7 +155,7 @@ namespace PicaVoxel
         }
     }
 
-    public class ChangeEventArgs
+    public class VoxelManipulatorChangeEventArgs
     {
         public Volume Volume;
         public Chunk Chunk;
