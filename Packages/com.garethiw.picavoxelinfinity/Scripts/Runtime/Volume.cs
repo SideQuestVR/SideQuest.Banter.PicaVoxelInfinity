@@ -326,6 +326,8 @@ namespace PicaVoxel
 
         public void SetVoxelByChangeEvent(VoxelChangeEventArgs e, bool persist = false)
         {
+            if (e.VolumeId != Identifier)
+                return;
             GetChunk((e.ChunkX,e.ChunkY,e.ChunkZ))?.SetVoxelByChangeEvent(e, persist);
         }
 
