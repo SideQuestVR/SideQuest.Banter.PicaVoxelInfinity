@@ -26,7 +26,7 @@ namespace PicaVoxel
 
         private int _seaLevel;
         
-        public void GenerateVoxel(int x, int y, int z, ref Voxel voxel)
+        public bool GenerateVoxel(int x, int y, int z, ref Voxel voxel)
         {
             if (_noise == null)
             {
@@ -52,6 +52,8 @@ namespace PicaVoxel
             //Debug.Log(val);
             voxel.Active = y < _seaLevel+ val;
             voxel.Value = y<=BedrockHeight? (byte)4: ((y+1) < _seaLevel+ val) ? (byte)1 : (byte)0;
+
+            return true;
         }
     }
     

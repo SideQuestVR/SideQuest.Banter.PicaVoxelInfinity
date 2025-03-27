@@ -125,25 +125,14 @@ namespace PicaVoxel
             _voxelDataGenerator = GetComponent<I_VoxelDataGenerator>();
             if (_voxelDataGenerator == null)
             {
-                _voxelDataGenerator = gameObject.AddComponent<SolidGenerator>();
+                _voxelDataGenerator = gameObject.AddComponent<InfiniteSolidGenerator>();
             }
             _voxelDataGenerator.Seed = GenerationSeed;
 
             _cameraTransform = Camera.main.transform;
             _lastCamOffset = _cameraTransform.position- (transform.position-(ChunkSize * VoxelSize * 0.5f * Vector3.one));
 
-            if (!IsInfinite)
-            {
-                for (int z = -(InfiniteChunkBounds.z - 1); z <= InfiniteChunkBounds.z - 1; z++)
-                    for (int y = -(InfiniteChunkBounds.y - 1); y <= InfiniteChunkBounds.y - 1; y++)
-                        for (int x = -(InfiniteChunkBounds.x - 1); x <= InfiniteChunkBounds.x - 1; x++)
-                        {
-                            if (!Chunks.ContainsKey((x, y, z)))
-                                Chunks[(x, y, z)] = Instantiate(ChunkPrefab, transform, false).GetComponent<Chunk>();
-                            Chunks[(x, y, z)].Initialize((x, y, z), this);
-                        }
-            }
-            else _isFirstPass = true;
+            _isFirstPass = true;
         }
 
         Queue<Chunk> _freeChunks = new();
@@ -160,6 +149,12 @@ namespace PicaVoxel
                 chunk.CheckGeneration();
             }
 
+            if (!IsInfinite && _isFirstPass && IsDataReady)
+            {
+                GenerateFiniteChunks();
+                _isFirstPass = false;
+            }
+            
             if (!IsInfinite)
                 return;
             
@@ -281,6 +276,46 @@ namespace PicaVoxel
             }
         }
 
+        private void GenerateFiniteChunks()
+        {
+            bool foundvox = true;
+
+            int r = 1;
+
+            Voxel v = new Voxel();
+            if (_voxelDataGenerator.GenerateVoxel(0, 0, 0, ref v))
+            {
+                if (!Chunks.ContainsKey((0, 0, 0)))
+                    Chunks[(0, 0, 0)] = Instantiate(ChunkPrefab, transform, false).GetComponent<Chunk>();
+                Chunks[(0, 0, 0)].Initialize((0, 0, 0), this);
+            }
+            while (foundvox)
+            {
+                foundvox = false;
+                for(int x=-r;x<=r;x++)
+                    for(int y=-r;y<=r;y++)
+                        for (int z = -r; z <= r; z++)
+                        {
+                            if ((x != -r && x != r) && (y != -r && y != r) && (z != -r && z != r))
+                                continue;
+                            
+                            if (_voxelDataGenerator.GenerateVoxel(x, y, z, ref v))
+                            {
+                                foundvox = true;
+
+                                if (!Chunks.ContainsKey((x / ChunkSize, y / ChunkSize, z / ChunkSize)))
+                                {
+                                    Chunks[(x / ChunkSize, y / ChunkSize, z / ChunkSize)] =
+                                        Instantiate(ChunkPrefab, transform, false).GetComponent<Chunk>();
+                                    Chunks[(x / ChunkSize, y / ChunkSize, z / ChunkSize)]
+                                        .Initialize((x / ChunkSize, y / ChunkSize, z / ChunkSize), this);
+                                }
+                            }
+                        }
+                r+=ChunkSize;
+            }
+        }
+        
         public void GenerateVoxel(int x, int y, int z, ref Voxel voxel)
         {
             _voxelDataGenerator.GenerateVoxel(x, y, z, ref voxel);

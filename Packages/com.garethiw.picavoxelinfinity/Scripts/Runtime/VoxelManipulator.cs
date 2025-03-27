@@ -155,7 +155,7 @@ namespace PicaVoxel
         private Volume VolumeRaycast(Ray ray)
         {
             
-            int hits = Physics.SphereCastNonAlloc(ray.origin, 0.05f, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
+            int hits = Physics.SphereCastNonAlloc(ray.origin, 0.025f, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
             if (hits > 0)
             {
                 return _hits[0].collider.gameObject.GetComponentInParent<Volume>();

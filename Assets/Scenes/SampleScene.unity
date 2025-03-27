@@ -122,6 +122,176 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &43371191
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 43371194}
+  - component: {fileID: 43371193}
+  - component: {fileID: 43371192}
+  m_Layer: 0
+  m_Name: Magica (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &43371192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 43371191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29ea456935bb42689a866a645ddb05aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ModelURL: https://github.com/ephtracy/voxel-model/raw/refs/heads/master/vox/monument/monu2.vox
+--- !u!114 &43371193
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 43371191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f481c0c791c90fd44bde5912521607c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ChunkPrefab: {fileID: 5017470182543096880, guid: 174a23e42d691b147b05be17a9cdc360, type: 3}
+  ChunkSize: 16
+  VoxelSize: 0.1
+  Pivot: {x: 0, y: 0, z: 0}
+  IsInfinite: 0
+  InfiniteChunkRadius: 0
+  InfiniteChunkBounds: {x: 0, y: 0, z: 0}
+  InfiniteUpdateInterval: 0.25
+  InfiniteUpdateSlicing: 8
+  InfiniteChunkRadiusUpdateMargin: 3
+  GenerationSeed: 0
+  Identifier: b50a6218-3629-411e-8c0d-d0a078c18959
+  MeshingMode: 1
+  MeshColliderMeshingMode: 1
+  GenerateMeshColliderSeparately: 0
+  Material: {fileID: 2100000, guid: d05b013250f9a3a41a16c1583247d6df, type: 2}
+  PhysicMaterial: {fileID: 0}
+  CollisionTrigger: 0
+  CollisionMode: 0
+  SelfShadingIntensity: 0.2
+  CastShadows: 1
+  ReceiveShadows: 1
+  ChunkLayer: 0
+  ImportedFrom: 0
+  ImportedFile: 
+  ImportedMode: 0
+  ImportedCutoutColor: {r: 0, g: 0, b: 0, a: 0}
+--- !u!4 &43371194
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 43371191}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 15.86, y: 28.914171, z: -11.387462}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &570986737
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 570986739}
+  - component: {fileID: 570986738}
+  - component: {fileID: 570986740}
+  m_Layer: 0
+  m_Name: Magica
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &570986738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 570986737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f481c0c791c90fd44bde5912521607c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ChunkPrefab: {fileID: 5017470182543096880, guid: 174a23e42d691b147b05be17a9cdc360, type: 3}
+  ChunkSize: 16
+  VoxelSize: 0.1
+  Pivot: {x: 0, y: 0, z: 0}
+  IsInfinite: 0
+  InfiniteChunkRadius: 0
+  InfiniteChunkBounds: {x: 0, y: 0, z: 0}
+  InfiniteUpdateInterval: 0.25
+  InfiniteUpdateSlicing: 8
+  InfiniteChunkRadiusUpdateMargin: 3
+  GenerationSeed: 0
+  Identifier: b50a6218-3629-411e-8c0d-d0a078c18959
+  MeshingMode: 1
+  MeshColliderMeshingMode: 1
+  GenerateMeshColliderSeparately: 0
+  Material: {fileID: 2100000, guid: d05b013250f9a3a41a16c1583247d6df, type: 2}
+  PhysicMaterial: {fileID: 0}
+  CollisionTrigger: 0
+  CollisionMode: 0
+  SelfShadingIntensity: 0.2
+  CastShadows: 1
+  ReceiveShadows: 1
+  ChunkLayer: 0
+  ImportedFrom: 0
+  ImportedFile: 
+  ImportedMode: 0
+  ImportedCutoutColor: {r: 0, g: 0, b: 0, a: 0}
+--- !u!4 &570986739
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 570986737}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.3607538, y: 28.914171, z: -11.387462}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &570986740
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 570986737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29ea456935bb42689a866a645ddb05aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ModelURL: https://github.com/ephtracy/voxel-model/raw/refs/heads/master/vox/monument/monu10.vox
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -368,6 +538,7 @@ MonoBehaviour:
   LayerMask:
     serializedVersion: 2
     m_Bits: 1
+  NumberOfTiles: 5
   VoxelValue: 0
   VoxelColor: {r: 1, g: 1, b: 1, a: 1}
   CursorPrefab: {fileID: 823897801914889954, guid: 9e54829b76f3712418a4e924ab987740, type: 3}
@@ -487,6 +658,91 @@ MonoBehaviour:
   HeightMax: 44
   HeightMin: 20
   BedrockHeight: -32
+--- !u!1 &2142809287
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2142809290}
+  - component: {fileID: 2142809289}
+  - component: {fileID: 2142809288}
+  m_Layer: 0
+  m_Name: Magica (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2142809288
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142809287}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29ea456935bb42689a866a645ddb05aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ModelURL: https://github.com/ephtracy/voxel-model/raw/refs/heads/master/vox/monument/monu7.vox
+--- !u!114 &2142809289
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142809287}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f481c0c791c90fd44bde5912521607c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ChunkPrefab: {fileID: 5017470182543096880, guid: 174a23e42d691b147b05be17a9cdc360, type: 3}
+  ChunkSize: 16
+  VoxelSize: 0.1
+  Pivot: {x: 0, y: 0, z: 0}
+  IsInfinite: 0
+  InfiniteChunkRadius: 0
+  InfiniteChunkBounds: {x: 0, y: 0, z: 0}
+  InfiniteUpdateInterval: 0.25
+  InfiniteUpdateSlicing: 8
+  InfiniteChunkRadiusUpdateMargin: 3
+  GenerationSeed: 0
+  Identifier: b50a6218-3629-411e-8c0d-d0a078c18959
+  MeshingMode: 1
+  MeshColliderMeshingMode: 1
+  GenerateMeshColliderSeparately: 0
+  Material: {fileID: 2100000, guid: d05b013250f9a3a41a16c1583247d6df, type: 2}
+  PhysicMaterial: {fileID: 0}
+  CollisionTrigger: 0
+  CollisionMode: 0
+  SelfShadingIntensity: 0.2
+  CastShadows: 1
+  ReceiveShadows: 1
+  ChunkLayer: 0
+  ImportedFrom: 0
+  ImportedFile: 
+  ImportedMode: 0
+  ImportedCutoutColor: {r: 0, g: 0, b: 0, a: 0}
+--- !u!4 &2142809290
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142809287}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.3607538, y: 28.914171, z: 17.4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -494,3 +750,6 @@ SceneRoots:
   - {fileID: 963194228}
   - {fileID: 705507995}
   - {fileID: 970619890}
+  - {fileID: 570986739}
+  - {fileID: 43371194}
+  - {fileID: 2142809290}

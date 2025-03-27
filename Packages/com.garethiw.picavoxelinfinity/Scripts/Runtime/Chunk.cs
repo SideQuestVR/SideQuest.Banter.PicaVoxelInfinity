@@ -109,6 +109,8 @@ namespace PicaVoxel
 
             if (!_hasData)
                 _disableMrNextFrame = true;
+            else if (!Volume.IsInfinite)
+                _isMeshDirty = true;
         }
 
         public Voxel? GetVoxel((int x, int y, int z) pos)
