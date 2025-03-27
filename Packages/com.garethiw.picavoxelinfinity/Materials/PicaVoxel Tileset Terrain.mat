@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: PicaVoxel Texture Tileset
+  m_Name: PicaVoxel Tileset Terrain
   m_Shader: {fileID: 4800000, guid: f5a09583a52934b439b1e40f466fc7f8, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -80,6 +80,8 @@ Material:
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
+    - _DistanceFalloff: 3.97
+    - _DrawDistance: 57.6
     - _DstBlend: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
