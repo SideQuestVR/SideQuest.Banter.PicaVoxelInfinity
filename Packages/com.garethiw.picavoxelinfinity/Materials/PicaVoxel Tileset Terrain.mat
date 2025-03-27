@@ -16,7 +16,7 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 3000
   stringTagMap: {}
   disabledShaderPasses: []
   m_LockedProperties: 
@@ -80,8 +80,8 @@ Material:
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
-    - _DistanceFalloff: 3.97
-    - _DrawDistance: 57.6
+    - _DistanceFalloff: 10
+    - _DrawDistance: 142.75
     - _DstBlend: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
