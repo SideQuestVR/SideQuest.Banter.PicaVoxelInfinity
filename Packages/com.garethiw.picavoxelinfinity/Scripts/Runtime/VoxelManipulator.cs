@@ -188,5 +188,11 @@ namespace PicaVoxel
         {
             VoxelValue = (byte)Math.Clamp(val, 0, NumberOfTiles);
         }
+
+        private void OnDestroy()
+        {
+            AddAction.performed -= OnAddAction;
+            RemoveAction.performed -= OnRemoveAction;
+        }
     }
 }
