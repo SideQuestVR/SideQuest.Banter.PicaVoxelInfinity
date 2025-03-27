@@ -93,6 +93,7 @@ namespace PicaVoxel
 
             _lastAction = 0;
 
+            Debug.Log("Manipulator AddVoxel");
             if (v != null)
             {
                 VoxelChangeEventArgs args = 
@@ -109,6 +110,7 @@ namespace PicaVoxel
                     voxelColor: v.Value.Color
                 );
                 OnManipulatorChange?.Invoke(args);
+                Debug.Log("Sending to eventbus");
                 EventBus.Trigger("OnVoxelManipulatorChange", args);
             }
 
@@ -125,6 +127,27 @@ namespace PicaVoxel
             Voxel? v = vol.SetVoxelAtWorldPosition(_hits[0].point + (ray.direction * 0.05f), new Voxel(){Active = false}, out Chunk chunk, out (int x, int y, int z) pos);
 
             _lastAction = 1;
+            
+            Debug.Log("Manipulator RemoveVoxel");
+            if (v != null)
+            {
+                VoxelChangeEventArgs args = 
+                    new VoxelChangeEventArgs(
+                        volumeId: _selectedVolume.Identifier,
+                        chunkX: _selectedChunk.Position.x,
+                        chunkY: _selectedChunk.Position.y,
+                        chunkZ: _selectedChunk.Position.z,
+                        voxelX: pos.x,
+                        voxelY: pos.y,
+                        voxelZ: pos.z,
+                        voxelActive: v.Value.Active,
+                        voxelValue: v.Value.Value,
+                        voxelColor: v.Value.Color
+                    );
+                OnManipulatorChange?.Invoke(args);
+                Debug.Log("Sending to eventbus");
+                EventBus.Trigger("OnVoxelManipulatorChange", args);
+            }
             
             return v!=null;
         }
