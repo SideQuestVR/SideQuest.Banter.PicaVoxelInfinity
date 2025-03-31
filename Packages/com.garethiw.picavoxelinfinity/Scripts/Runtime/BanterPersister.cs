@@ -114,14 +114,14 @@ namespace PicaVoxel
 
                                         Debug.Log($"{n}: {key}");
                                         
+                                        n++;
+                                        
                                         Chunk c = _volume.GetChunk((int.Parse(parts[2]), int.Parse(parts[3]),
                                             int.Parse(parts[4])));
                                         if (!c)
                                             continue;
 
                                         c.LoadChanges(data);
-
-                                        n++;
                                     }
                                 }
                             }
