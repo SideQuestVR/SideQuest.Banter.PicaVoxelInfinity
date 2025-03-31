@@ -393,7 +393,7 @@ namespace PicaVoxel
             return _voxelDataPersister.SaveChunk(this, pos.x, pos.y, pos.z, data);
         }
         
-        public void SeChunkChangesByChangesEvent(ChunkChangesEventArgs e)
+        public void SetChunkChangesByChangesEvent(ChunkChangesEventArgs e)
         {
             if (e.VolumeId != Identifier)
                 return;
