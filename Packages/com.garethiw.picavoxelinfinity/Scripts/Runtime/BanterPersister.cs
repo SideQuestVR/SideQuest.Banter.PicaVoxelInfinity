@@ -40,7 +40,7 @@ namespace PicaVoxel
 
         public bool SaveChunk(Volume vol, int x, int y, int z, byte[] data)
         {
-            string key = $"{_baseUrl}/save/{SpaceName}_{vol.Identifier.Replace("{", "").Replace("}", "")}_{x}_{y}_{z}";
+            string key = $"{SpaceName}_{vol.Identifier.Replace("{", "").Replace("}", "")}_{x}_{y}_{z}";
 
             _ = Task.Run(()=>PostDataAsync(key, data));
 
@@ -141,7 +141,7 @@ namespace PicaVoxel
         {
             try
             {
-                string url = $"{_baseUrl}/{key}";
+                string url = $"{_baseUrl}/save/{key}";
                 ByteArrayContent content = new ByteArrayContent(data);
                 HttpResponseMessage response = await _httpClient.PostAsync(url, content);
                 response.EnsureSuccessStatusCode();
