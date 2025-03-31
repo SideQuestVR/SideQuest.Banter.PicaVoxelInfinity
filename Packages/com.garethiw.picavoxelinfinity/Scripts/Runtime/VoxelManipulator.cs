@@ -110,7 +110,6 @@ namespace PicaVoxel
                     voxelColor: v.Value.Color
                 );
                 OnManipulatorChange?.Invoke(args);
-                Debug.Log("Sending to eventbus");
                 EventBus.Trigger("OnVoxelManipulatorChange", args);
             }
 
