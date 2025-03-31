@@ -139,7 +139,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &43371192
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -147,7 +147,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 43371191}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 29ea456935bb42689a866a645ddb05aa, type: 3}
   m_Name: 
@@ -219,13 +219,14 @@ GameObject:
   - component: {fileID: 570986739}
   - component: {fileID: 570986738}
   - component: {fileID: 570986740}
+  - component: {fileID: 570986741}
   m_Layer: 0
   m_Name: Magica
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &570986738
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -288,12 +289,25 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 570986737}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 29ea456935bb42689a866a645ddb05aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   ModelURL: https://github.com/ephtracy/voxel-model/raw/refs/heads/master/vox/monument/monu10.vox
+--- !u!114 &570986741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 570986737}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fea5dbed416e4af7921db055ded6acd1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  WorldName: Test
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -679,10 +693,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 970619888}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fea5dbed416e4af7921db055ded6acd1, type: 3}
+  m_Script: {fileID: 11500000, guid: d55c9d70d51c4184af2ecd968a92249c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  WorldName: Test
+  SpaceName: test
+  BaseURL: https://screen.sdq.st:2053/v1/chunk/
+  BatchGetSize: 250
+  BatchGetInterval: 0.5
 --- !u!1 &2142809287
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.IO;
@@ -27,7 +28,7 @@ namespace PicaVoxel
         public float BatchGetInterval = 0.1f;
         
         private float _batchInterval;
-        private Queue<string> _chunksToFetch = new Queue<string>();
+        private ConcurrentQueue<string> _chunksToFetch = new ConcurrentQueue<string>();
 
         private Volume _volume;
         
@@ -55,10 +56,11 @@ namespace PicaVoxel
             return true;
         }
 
+        private bool _ready = true;
         private void Update()
         {
             _batchInterval += Time.deltaTime;
-            if (_batchInterval >= BatchGetInterval)
+            if (_batchInterval >= BatchGetInterval && _ready)
             {
                 _batchInterval = 0;
                 if (_chunksToFetch.Count > 0)
@@ -76,12 +78,17 @@ namespace PicaVoxel
                     
                     if (keys == string.Empty)
                         return;
+
+                    _ready = false;
                     
                     _ = Task.Run(()=>GetDataAsync(keys)).ContinueWith((Task<byte[]> task) =>
                     {
-                        if (task.IsFaulted)
+                        if (task.IsFaulted || !task.IsCompletedSuccessfully || task.Result.Length == 0)
+                        {
+                            _ready = true;
                             return;
-                        
+                        }
+
                         try
                         {
                             string[] keysplit = keys.Split(',');
@@ -94,18 +101,25 @@ namespace PicaVoxel
                                     while (reader.BaseStream.Position < reader.BaseStream.Length)
                                     {
                                         int l = reader.ReadInt32();
+                                        if (l == 0)
+                                        {
+                                            n++;
+                                            continue;
+                                        }
+                                        
                                         byte[] data = reader.ReadBytes(l);
 
                                         string key = keysplit[n];
                                         string[] parts = key.Split('_');
 
+                                        Debug.Log($"{n}: {key}");
+                                        
                                         Chunk c = _volume.GetChunk((int.Parse(parts[2]), int.Parse(parts[3]),
                                             int.Parse(parts[4])));
                                         if (!c)
-                                            return;
+                                            continue;
 
                                         c.LoadChanges(data);
-                                        _chunksToFetch.Enqueue(key);
 
                                         n++;
                                     }
@@ -116,6 +130,8 @@ namespace PicaVoxel
                         {
                             Debug.LogError(e);
                         }
+                        
+                        _ready = true;
                     });
                 }
             }
@@ -143,6 +159,7 @@ namespace PicaVoxel
             {
                 string url = $"{_baseUrl}/save/{key}";
                 ByteArrayContent content = new ByteArrayContent(data);
+                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
                 HttpResponseMessage response = await _httpClient.PostAsync(url, content);
                 response.EnsureSuccessStatusCode();
                 return response.IsSuccessStatusCode;
