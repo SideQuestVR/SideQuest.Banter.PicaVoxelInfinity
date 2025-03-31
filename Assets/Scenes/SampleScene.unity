@@ -177,6 +177,7 @@ MonoBehaviour:
   InfiniteChunkRadiusUpdateMargin: 3
   GenerationSeed: 0
   Identifier: b50a6218-3629-411e-8c0d-d0a078c18959
+  PersistenceInterval: 2
   MeshingMode: 1
   MeshColliderMeshingMode: 1
   GenerateMeshColliderSeparately: 0
@@ -249,6 +250,7 @@ MonoBehaviour:
   InfiniteChunkRadiusUpdateMargin: 3
   GenerationSeed: 0
   Identifier: b50a6218-3629-411e-8c0d-d0a078c18959
+  PersistenceInterval: 2
   MeshingMode: 1
   MeshColliderMeshingMode: 1
   GenerateMeshColliderSeparately: 0
@@ -475,7 +477,7 @@ Transform:
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
   m_LocalRotation: {x: 0.19996412, y: 0.3736123, z: -0.08282785, w: 0.90198}
-  m_LocalPosition: {x: 0, y: 25, z: 0}
+  m_LocalPosition: {x: 0, y: 10.02, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -494,7 +496,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Direction: {x: 1, y: 0, z: 1}
-  Speed: 5
+  Speed: 0
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -566,7 +568,15 @@ MonoBehaviour:
     m_Id: b2814d57-9b09-4c0b-aa81-de92124e7e4d
     m_Processors: 
     m_Interactions: 
-    m_SingletonActionBindings: []
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 4d238cb4-66b6-4437-980a-6bcdac3f8ced
+      m_Path: <Mouse>/rightButton
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Remove
+      m_Flags: 0
     m_Flags: 0
   OnManipulatorChange:
     m_PersistentCalls:
@@ -582,6 +592,7 @@ GameObject:
   - component: {fileID: 970619890}
   - component: {fileID: 970619889}
   - component: {fileID: 970619891}
+  - component: {fileID: 970619892}
   m_Layer: 0
   m_Name: Terrain
   m_TagString: Untagged
@@ -613,6 +624,7 @@ MonoBehaviour:
   InfiniteChunkRadiusUpdateMargin: 3
   GenerationSeed: 3
   Identifier: 2336a585-8b43-4730-8870-6473bf796fa3
+  PersistenceInterval: 2
   MeshingMode: 1
   MeshColliderMeshingMode: 1
   GenerateMeshColliderSeparately: 0
@@ -655,9 +667,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 052435b43834405fae64f65ea39f880f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HeightMax: 44
-  HeightMin: 20
+  HeightMax: 10
+  HeightMin: 0
   BedrockHeight: -32
+--- !u!114 &970619892
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 970619888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fea5dbed416e4af7921db055ded6acd1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  WorldName: Test
 --- !u!1 &2142809287
 GameObject:
   m_ObjectHideFlags: 0
@@ -713,6 +738,7 @@ MonoBehaviour:
   InfiniteChunkRadiusUpdateMargin: 3
   GenerationSeed: 0
   Identifier: b50a6218-3629-411e-8c0d-d0a078c18959
+  PersistenceInterval: 2
   MeshingMode: 1
   MeshColliderMeshingMode: 1
   GenerateMeshColliderSeparately: 0

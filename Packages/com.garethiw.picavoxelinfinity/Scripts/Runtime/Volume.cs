@@ -80,8 +80,11 @@ namespace PicaVoxel
         public int GenerationSeed;
 
         public bool IsDataReady => _voxelDataGenerator.IsReady;
+        public bool IsPersisterReady => _voxelDataPersister.IsReady;
 
         public string Identifier;
+
+        public float PersistenceInterval = 2f;
         
         // Chunk generation settings
         public MeshingMode MeshingMode;
@@ -106,6 +109,7 @@ namespace PicaVoxel
         private Transform _cameraTransform;
         private float _infiniteUpdateTimer;
         private I_VoxelDataGenerator _voxelDataGenerator;
+        private I_VoxelDataPersister _voxelDataPersister;
         private bool _isFirstPass;
         private Vector3 _lastCamOffset;
         
@@ -129,6 +133,12 @@ namespace PicaVoxel
             }
             _voxelDataGenerator.Seed = GenerationSeed;
 
+            _voxelDataPersister = GetComponent<I_VoxelDataPersister>();
+            if (_voxelDataPersister == null)
+            {
+                _voxelDataPersister = gameObject.AddComponent<DiskPersister>();
+            }
+            
             _cameraTransform = Camera.main.transform;
             _lastCamOffset = _cameraTransform.position- (transform.position-(ChunkSize * VoxelSize * 0.5f * Vector3.one));
 
@@ -147,6 +157,7 @@ namespace PicaVoxel
             foreach (Chunk chunk in Chunks.Values)
             {
                 chunk.CheckGeneration();
+                chunk.Persist();
             }
 
             if (!IsInfinite && _isFirstPass && IsDataReady)
@@ -366,6 +377,22 @@ namespace PicaVoxel
             GetChunk((e.ChunkX,e.ChunkY,e.ChunkZ))?.SetVoxelByChangeEvent(e, persist);
         }
 
+        public bool LoadChunkChanges((int x, int y, int z) pos)
+        {
+            if (!_voxelDataPersister.IsReady)
+                return false;
+            
+            return _voxelDataPersister.LoadChunk(this, pos.x, pos.y, pos.z);
+        }
+
+        public bool SaveChunkChanges((int x, int y, int z) pos, byte[] data)
+        {
+            if (!_voxelDataPersister.IsReady)
+                return false;
+            
+            return _voxelDataPersister.SaveChunk(this, pos.x, pos.y, pos.z, data);
+        }
+        
         public void RegenerateMeshes(bool immediate = false)
         {
             foreach (Chunk c in Chunks.Values)

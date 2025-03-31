@@ -48,8 +48,13 @@ namespace PicaVoxel
         public bool CanBeReused;
         
         private bool _isDataDirty = false;
+        private bool _isChangesDirty = false;
         private bool _isMeshDirty = false;
         private ChunkStatus status = ChunkStatus.NoChange;
+
+        private float _persistTime = 0f;
+        
+        private Dictionary<(int x, int y, int z), Voxel> _changes = new();
 
         private List<Vector3> vertices = new List<Vector3>(2048);
         private List<Vector4> uvs = new List<Vector4>(2048);
@@ -107,6 +112,8 @@ namespace PicaVoxel
                     }
             //Debug.Log($"Chunk {Position.x},{Position.y},{Position.z} is finished data gen");
 
+            _volume.LoadChunkChanges(Position);
+            
             if (!_hasData)
                 _disableMrNextFrame = true;
             else if (!Volume.IsInfinite)
@@ -127,6 +134,12 @@ namespace PicaVoxel
             if(i<0 || i>=Voxels.Length) return null;
 
             Voxels[i] = newValue;
+            _changes[pos] = newValue;
+            if (persist)
+            {
+                _persistTime = _volume.PersistenceInterval;
+            }
+
             EvaluateData();
             GenerateMesh(true);
             
@@ -153,6 +166,24 @@ namespace PicaVoxel
             };
             
             SetVoxel((e.VoxelX,e.VoxelY,e.VoxelZ), v, persist);
+        }
+
+        public void Persist()
+        {
+            if (_changes.Count == 0)
+                return;
+
+            if (_persistTime <= 0f)
+                return;
+            
+            _persistTime -= Time.deltaTime;
+            if (_persistTime <= 0f)
+            {
+                if (SaveChanges())
+                {
+                    _persistTime = 0;
+                }
+            }
         }
         
         public void CheckGeneration()
@@ -343,5 +374,62 @@ namespace PicaVoxel
                     }
         }
         
+        public void LoadChanges(byte[] data)
+        {
+            int bytelength = (sizeof(int) * 3);
+            byte[] buff = new byte[bytelength];
+            byte[] vbuff = new byte[Voxel.BYTE_SIZE];
+            
+            using (MemoryStream ms = new MemoryStream(data))
+            {
+                using (BinaryReader br = new BinaryReader(ms))
+                {
+                    while (ms.Position < ms.Length)
+                    {
+                        int x = br.ReadInt32();
+                        int y = br.ReadInt32();
+                        int z = br.ReadInt32();
+                            
+                        int l = ms.Read(vbuff, 0, Voxel.BYTE_SIZE);
+                        if (l == Voxel.BYTE_SIZE)
+                        {
+                            Voxel v = new Voxel(vbuff);
+                            Voxels[x + Volume.ChunkSize * (y + Volume.ChunkSize * z)] = v;
+                            _changes[(x, y, z)] = v;
+                        }
+                        
+                    }
+                }
+            }
+            
+            EvaluateData();
+            _isMeshDirty = true;
+        }
+        
+        private bool SaveChanges()
+        {
+            if (!_volume.IsPersisterReady)
+                return false;
+
+            byte[] outbytes;
+            using (MemoryStream ms = new MemoryStream())
+            {
+                using (BinaryWriter bw = new BinaryWriter(ms))
+                {
+                    foreach(KeyValuePair<(int x, int y, int z), Voxel> change in _changes)
+                    {
+                        bw.Write(change.Key.x);                        
+                        bw.Write(change.Key.y);                        
+                        bw.Write(change.Key.z);
+                        bw.Write(change.Value.ToBytes());
+                    }
+                    bw.Flush();
+                }
+
+                outbytes = ms.ToArray();
+            }
+
+            return _volume.SaveChunkChanges(Position, outbytes);
+        }
     }
 }
