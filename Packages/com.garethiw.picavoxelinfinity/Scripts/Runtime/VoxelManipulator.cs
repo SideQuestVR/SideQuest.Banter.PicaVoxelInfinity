@@ -27,6 +27,7 @@ namespace PicaVoxel
         public Color VoxelColor = Color.white;
 
         public GameObject CursorPrefab;
+        public bool UseLineRenderer = false;
         
         public InputAction AddAction;
         public InputAction RemoveAction;
@@ -45,6 +46,7 @@ namespace PicaVoxel
         private GameObject _cursor;
         private float _cursorUpdate = 0f;
         private int _lastAction = 0;
+        private LineRenderer _lineRenderer;
         
         private void Start()
         {
@@ -59,7 +61,11 @@ namespace PicaVoxel
             ToggleActiveAction.Enable();
             ToggleActiveAction.performed += OnActiveAction;
 
-
+            if (UseLineRenderer)
+            {
+                _lineRenderer = GetComponent<LineRenderer>();
+            }
+            
             _cursor = Instantiate(CursorPrefab);
             _cursor.SetActive(false);
         }
@@ -103,11 +109,24 @@ namespace PicaVoxel
             
             Ray ray = new Ray(transform.position, transform.forward);
             Debug.DrawRay(ray.origin, ray.direction * RayDistanceMinMax.y, Color.magenta, 0.5f);
-            _selectedVolume = VolumeRaycast(ray, _lastAction==0?-0.05f:0.05f, out _selectedChunk, out _selectedVoxel);
+            _selectedVolume = VolumeRaycast(ray, _lastAction==0?-0.05f:0.05f, out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
 
+            if (UseLineRenderer && _lineRenderer && hitPos.HasValue)
+            {
+                _lineRenderer.enabled = true;
+                _lineRenderer.SetPosition(0, transform.position);                    
+                for (int i = 1; i < _lineRenderer.positionCount; i++)
+                {
+                    _lineRenderer.SetPosition(i, Vector3.Lerp(transform.position, hitPos.Value, (1f/_lineRenderer.positionCount)*(i+1)));                    
+                }
+                
+            }
+            
             if (_selectedVolume == null || _selectedChunk == null)
             {
                 _cursor.SetActive(false);
+                if (UseLineRenderer && _lineRenderer)
+                    _lineRenderer.enabled = false;
                 return;
             }
 
@@ -209,15 +228,17 @@ namespace PicaVoxel
             return null;
         }
         
-        private Volume VolumeRaycast(Ray ray, float offset, out Chunk chunk, out (int x, int y, int z) voxelPos)
+        private Volume VolumeRaycast(Ray ray, float offset, out Chunk chunk, out (int x, int y, int z) voxelPos, out Vector3? hitPos)
         {
             Volume vol = null;
             chunk = null;
             voxelPos = (0, 0, 0);
+            hitPos = null;
             
             int hits = Physics.SphereCastNonAlloc(ray.origin, 0.05f, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
             if (hits > 0)
             {
+                hitPos = _hits[0].point;
                 vol = _hits[0].collider.gameObject.GetComponentInParent<Volume>();
                 if (vol == null)
                     return vol;
