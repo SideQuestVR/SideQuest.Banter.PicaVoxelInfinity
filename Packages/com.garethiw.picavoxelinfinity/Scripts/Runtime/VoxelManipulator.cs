@@ -91,6 +91,11 @@ namespace PicaVoxel
 
         private void Update()
         {
+            if (!IsActive)
+            {
+                _cursor.SetActive(false);
+                return;
+            }
             _cursorUpdate += Time.deltaTime;
             if (_cursorUpdate < 0.1f)
                 return;
@@ -235,6 +240,9 @@ namespace PicaVoxel
             if (VoxelValue == MaxValue && IncludeInactiveInValueRange)
             {
                 SetActive(false);
+                VoxelValue++;
+                VoxelValue = (byte)(VoxelValue % (MaxValue+1));
+                return;
             }
             SetVoxelValue(VoxelValue++);
         }
@@ -248,12 +256,16 @@ namespace PicaVoxel
             if (VoxelValue == 0 && IncludeInactiveInValueRange)
             {
                 SetActive(false);
+                VoxelValue--;
+                VoxelValue = (byte)(VoxelValue % (MaxValue+1));
+                return;
             }
             SetVoxelValue(VoxelValue--);
         }
         
         public void SetVoxelValue(int val)
         {
+            SetActive(true);
             VoxelValue = (byte)(VoxelValue % (MaxValue+1));
             OnValueChanged?.Invoke(VoxelValue);
             EventBus.Trigger("OnVoxelManipulatorValueChanged", VoxelValue);
