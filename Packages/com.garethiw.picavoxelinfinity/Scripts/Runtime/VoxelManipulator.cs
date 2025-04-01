@@ -48,6 +48,7 @@ namespace PicaVoxel
         private int _lastAction = 0;
         private LineRenderer _lineRenderer;
         private Vector3 _lastLRPos;
+        private float _lastVoxelSize = 1f;
         
         private void Start()
         {
@@ -108,7 +109,7 @@ namespace PicaVoxel
             Ray ray = new Ray(transform.position, transform.forward);
             if (UseLineRenderer && _lineRenderer && _lineRenderer.enabled)
             {
-                int hits = Physics.SphereCastNonAlloc(ray.origin, 0.05f, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
+                int hits = Physics.SphereCastNonAlloc(ray.origin, 0.1f*_lastVoxelSize, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
                 if (hits > 0)
                 {
                     _lastLRPos = _hits[0].point;
@@ -140,8 +141,8 @@ namespace PicaVoxel
             _cursorUpdate = 0f;
             
             Debug.DrawRay(ray.origin, ray.direction * RayDistanceMinMax.y, Color.magenta, 0.5f);
-            _selectedVolume = VolumeRaycast(ray, _lastAction==0?-0.05f:0.05f, out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
-
+            _selectedVolume = VolumeRaycast(ray, _lastAction==0?-(0.01f*_lastVoxelSize):(0.01f*_lastVoxelSize), out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
+            
             if (UseLineRenderer && _lineRenderer && hitPos.HasValue)
             {
                 _lastLRPos = hitPos.Value;
@@ -155,10 +156,12 @@ namespace PicaVoxel
                     _lineRenderer.enabled = false;
                 return;
             }
+            
+            _lastVoxelSize = _selectedVolume.VoxelSize;
 
             _cursor.transform.localScale = new Vector3(1.01f,1.01f,1.01f) * _selectedVolume.VoxelSize;
             _cursor.transform.rotation = _selectedVolume.transform.rotation;
-            _cursor.transform.position = _selectedChunk.transform.position + new Vector3(_selectedVoxel.x, _selectedVoxel.y, _selectedVoxel.z)*_selectedVolume.VoxelSize + (Vector3.one * (_selectedVolume.VoxelSize * 0.5f));
+            _cursor.transform.position = _selectedChunk.transform.TransformPoint(new Vector3(_selectedVoxel.x, _selectedVoxel.y, _selectedVoxel.z)*_selectedVolume.VoxelSize + (Vector3.one * (_selectedVolume.VoxelSize * 0.5f)));
             _cursor.SetActive(true);
         }
 
@@ -172,13 +175,13 @@ namespace PicaVoxel
             Volume vol = VolumeRaycast(ray);
             if (!vol) return false;
 
-            if ((_hits[0].point - transform.position).magnitude < RayDistanceMinMax.x)
+            if ((_hits[0].point - transform.position).magnitude < (RayDistanceMinMax.x*_lastVoxelSize))
                 return false;
             
-            if (vol.GetVoxelAtWorldPosition(_hits[0].point + (ray.direction * 0.05f), out Chunk _, out (int x, int y, int z) _) == null)
+            if (vol.GetVoxelAtWorldPosition(_hits[0].point + (ray.direction * (0.1f*_lastVoxelSize)), out Chunk _, out (int x, int y, int z) _) == null)
                 return false;
             
-            Voxel? v = vol.SetVoxelAtWorldPosition(_hits[0].point - (ray.direction * 0.05f), new Voxel(){Active = true, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
+            Voxel? v = vol.SetVoxelAtWorldPosition(_hits[0].point - (ray.direction * (0.1f*_lastVoxelSize)), new Voxel(){Active = true, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
 
             _lastAction = 0;
 
@@ -215,7 +218,7 @@ namespace PicaVoxel
             Volume vol = VolumeRaycast(ray);
             if (!vol) return false;
 
-            Voxel? v = vol.SetVoxelAtWorldPosition(_hits[0].point + (ray.direction * 0.05f), new Voxel(){Active = false}, out Chunk chunk, out (int x, int y, int z) pos);
+            Voxel? v = vol.SetVoxelAtWorldPosition(_hits[0].point + (ray.direction *(0.1f*_lastVoxelSize)), new Voxel(){Active = false}, out Chunk chunk, out (int x, int y, int z) pos);
 
             _lastAction = 1;
             
@@ -245,7 +248,7 @@ namespace PicaVoxel
         private Volume VolumeRaycast(Ray ray)
         {
             
-            int hits = Physics.SphereCastNonAlloc(ray.origin, 0.025f, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
+            int hits = Physics.SphereCastNonAlloc(ray.origin, (0.1f*_lastVoxelSize), ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
             if (hits > 0)
             {
                 return _hits[0].collider.gameObject.GetComponentInParent<Volume>();
@@ -261,7 +264,7 @@ namespace PicaVoxel
             voxelPos = (0, 0, 0);
             hitPos = null;
             
-            int hits = Physics.SphereCastNonAlloc(ray.origin, 0.05f, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
+            int hits = Physics.SphereCastNonAlloc(ray.origin, (0.1f*_lastVoxelSize), ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
             if (hits > 0)
             {
                 hitPos = _hits[0].point;
