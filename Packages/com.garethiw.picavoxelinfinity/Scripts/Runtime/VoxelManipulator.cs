@@ -140,7 +140,6 @@ namespace PicaVoxel
                 return;
             _cursorUpdate = 0f;
             
-            Debug.DrawRay(ray.origin, ray.direction * RayDistanceMinMax.y, Color.magenta, 0.5f);
             _selectedVolume = VolumeRaycast(ray, _lastAction==0?-(0.01f*_lastVoxelSize):(0.01f*_lastVoxelSize), out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
             
             if (UseLineRenderer && _lineRenderer && hitPos.HasValue)
@@ -156,6 +155,8 @@ namespace PicaVoxel
                     _lineRenderer.enabled = false;
                 return;
             }
+            
+            Debug.DrawLine(ray.origin, hitPos.Value, Color.magenta, 0.5f);
             
             _lastVoxelSize = _selectedVolume.VoxelSize;
 
