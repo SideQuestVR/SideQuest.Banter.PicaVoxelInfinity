@@ -240,8 +240,7 @@ namespace PicaVoxel
             if (VoxelValue == MaxValue && IncludeInactiveInValueRange)
             {
                 SetActive(false);
-                VoxelValue++;
-                VoxelValue = (byte)(VoxelValue % (MaxValue+1));
+                VoxelValue=(byte)0;
                 OnValueChanged?.Invoke(VoxelValue);
                 EventBus.Trigger("OnVoxelManipulatorValueChanged", (int)VoxelValue);
                 return;
