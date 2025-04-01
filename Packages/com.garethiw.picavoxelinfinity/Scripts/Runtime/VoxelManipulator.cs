@@ -47,6 +47,7 @@ namespace PicaVoxel
         private float _cursorUpdate = 0f;
         private int _lastAction = 0;
         private LineRenderer _lineRenderer;
+        private Vector3 _lastLRPos;
         
         private void Start()
         {
@@ -64,6 +65,7 @@ namespace PicaVoxel
             if (UseLineRenderer)
             {
                 _lineRenderer = GetComponent<LineRenderer>();
+                _lineRenderer.enabled = false;
             }
             
             _cursor = Instantiate(CursorPrefab);
@@ -95,6 +97,31 @@ namespace PicaVoxel
             RemoveVoxel();
         }
 
+        private void LateUpdate()
+        {
+            if (!IsActive)
+            {
+                _cursor.SetActive(false);
+                return;
+            }
+            
+            Ray ray = new Ray(transform.position, transform.forward);
+            if (UseLineRenderer && _lineRenderer && _lineRenderer.enabled)
+            {
+                int hits = Physics.SphereCastNonAlloc(ray.origin, 0.05f, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
+                if (hits > 0)
+                {
+                    _lastLRPos = _hits[0].point;
+                    _lineRenderer.SetPosition(0, transform.position);
+                    for (int i = 1; i < _lineRenderer.positionCount; i++)
+                    {
+                        _lineRenderer.SetPosition(i,
+                            Vector3.Lerp(transform.position, _lastLRPos, (1f / _lineRenderer.positionCount) * (i + 1)));
+                    }
+                }
+            }
+        }
+
         private void Update()
         {
             if (!IsActive)
@@ -102,24 +129,21 @@ namespace PicaVoxel
                 _cursor.SetActive(false);
                 return;
             }
+
+            Ray ray = new Ray(transform.position, transform.forward);
+            
             _cursorUpdate += Time.deltaTime;
             if (_cursorUpdate < 0.1f)
                 return;
             _cursorUpdate = 0f;
             
-            Ray ray = new Ray(transform.position, transform.forward);
             Debug.DrawRay(ray.origin, ray.direction * RayDistanceMinMax.y, Color.magenta, 0.5f);
             _selectedVolume = VolumeRaycast(ray, _lastAction==0?-0.05f:0.05f, out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
 
             if (UseLineRenderer && _lineRenderer && hitPos.HasValue)
             {
+                _lastLRPos = hitPos.Value;
                 _lineRenderer.enabled = true;
-                _lineRenderer.SetPosition(0, transform.position);                    
-                for (int i = 1; i < _lineRenderer.positionCount; i++)
-                {
-                    _lineRenderer.SetPosition(i, Vector3.Lerp(transform.position, hitPos.Value, (1f/_lineRenderer.positionCount)*(i+1)));                    
-                }
-                
             }
             
             if (_selectedVolume == null || _selectedChunk == null)
