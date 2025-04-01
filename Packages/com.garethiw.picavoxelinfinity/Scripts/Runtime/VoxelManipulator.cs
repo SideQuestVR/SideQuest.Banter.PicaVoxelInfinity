@@ -127,6 +127,8 @@ namespace PicaVoxel
             if (!IsActive)
             {
                 _cursor.SetActive(false);
+                if (UseLineRenderer && _lineRenderer)
+                    _lineRenderer.enabled = false;
                 return;
             }
 
