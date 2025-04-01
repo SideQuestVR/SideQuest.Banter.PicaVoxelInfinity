@@ -9,20 +9,34 @@ namespace PicaVoxel
 {
     public class VoxelManipulator : MonoBehaviour
     {
+        public enum ManipulatorMode
+        {
+            Value,
+            Color
+        }
+        
+        public bool IsActive;
+        
         public Vector2 RayDistanceMinMax;
         public LayerMask LayerMask;
-
-        public int NumberOfTiles = 5;
+        
+        public int MaxValue = 4;
+        public bool IncludeInactiveInValueRange = true; 
         
         public byte VoxelValue = 0;
         public Color VoxelColor = Color.white;
 
         public GameObject CursorPrefab;
         
-        [FormerlySerializedAs("PerformAction")] public InputAction AddAction;
+        public InputAction AddAction;
         public InputAction RemoveAction;
+        public InputAction IncrementValueAction;
+        public InputAction DecrementValueAction;
+        public InputAction ToggleActiveAction;
 
-        public UnityEvent<VoxelChangeEventArgs> OnManipulatorChange;
+        public UnityEvent<VoxelEditEventArgs> OnManipulatorEdit;
+        public UnityEvent<int> OnValueChanged;
+        public UnityEvent<bool> OnActiveChanged;
         
         private RaycastHit[] _hits = new RaycastHit[1];
         private Volume _selectedVolume;
@@ -38,9 +52,31 @@ namespace PicaVoxel
             AddAction.performed += OnAddAction;
             RemoveAction.Enable();
             RemoveAction.performed += OnRemoveAction;
+            IncrementValueAction.Enable();
+            IncrementValueAction.performed += OnIncrementValueAction;
+            DecrementValueAction.Enable();
+            DecrementValueAction.performed += OnDecrementValueAction;
+            ToggleActiveAction.Enable();
+            ToggleActiveAction.performed += OnActiveAction;
+
 
             _cursor = Instantiate(CursorPrefab);
             _cursor.SetActive(false);
+        }
+
+        private void OnActiveAction(InputAction.CallbackContext obj)
+        {
+            SetActive(!IsActive);
+        }
+
+        private void OnIncrementValueAction(InputAction.CallbackContext obj)
+        {
+            IncrementValue();
+        }
+        
+        private void OnDecrementValueAction(InputAction.CallbackContext obj)
+        {
+            DecrementValue();
         }
 
         private void OnAddAction(InputAction.CallbackContext obj)
@@ -96,8 +132,8 @@ namespace PicaVoxel
             Debug.Log("Manipulator AddVoxel");
             if (v != null)
             {
-                VoxelChangeEventArgs args = 
-                new VoxelChangeEventArgs(
+                VoxelEditEventArgs args = 
+                new VoxelEditEventArgs(
                     volumeId: _selectedVolume.Identifier,
                     chunkX: _selectedChunk.Position.x,
                     chunkY: _selectedChunk.Position.y,
@@ -109,8 +145,8 @@ namespace PicaVoxel
                     voxelValue: v.Value.Value,
                     voxelColor: v.Value.Color
                 );
-                OnManipulatorChange?.Invoke(args);
-                EventBus.Trigger("OnVoxelManipulatorChange", args);
+                OnManipulatorEdit?.Invoke(args);
+                EventBus.Trigger("OnVoxelManipulatorEdit", args);
             }
 
             return v!=null;
@@ -130,8 +166,8 @@ namespace PicaVoxel
             Debug.Log("Manipulator RemoveVoxel");
             if (v != null)
             {
-                VoxelChangeEventArgs args = 
-                    new VoxelChangeEventArgs(
+                VoxelEditEventArgs args = 
+                    new VoxelEditEventArgs(
                         volumeId: _selectedVolume.Identifier,
                         chunkX: _selectedChunk.Position.x,
                         chunkY: _selectedChunk.Position.y,
@@ -143,9 +179,8 @@ namespace PicaVoxel
                         voxelValue: v.Value.Value,
                         voxelColor: v.Value.Color
                     );
-                OnManipulatorChange?.Invoke(args);
-                Debug.Log("Sending to eventbus");
-                EventBus.Trigger("OnVoxelManipulatorChange", args);
+                OnManipulatorEdit?.Invoke(args);
+                EventBus.Trigger("OnVoxelManipulatorEdit", args);
             }
             
             return v!=null;
@@ -183,15 +218,53 @@ namespace PicaVoxel
             return null;
         }
 
+        public void SetActive(bool active)
+        {
+            IsActive = active;
+            OnActiveChanged?.Invoke(active);
+            EventBus.Trigger("OnVoxelManipulatorActiveChanged", active);
+        }
+        
+        public void IncrementValue()
+        {
+            if (!IsActive)
+            {
+                SetActive(true);
+                return;
+            }
+            if (VoxelValue == MaxValue && IncludeInactiveInValueRange)
+            {
+                SetActive(false);
+            }
+            SetVoxelValue(VoxelValue++);
+        }
+        public void DecrementValue()
+        {
+            if (!IsActive)
+            {
+                SetActive(true);
+                return;
+            }
+            if (VoxelValue == 0 && IncludeInactiveInValueRange)
+            {
+                SetActive(false);
+            }
+            SetVoxelValue(VoxelValue--);
+        }
+        
         public void SetVoxelValue(int val)
         {
-            VoxelValue = (byte)Math.Clamp(val, 0, NumberOfTiles);
+            VoxelValue = (byte)(VoxelValue % (MaxValue+1));
+            OnValueChanged?.Invoke(VoxelValue);
+            EventBus.Trigger("OnVoxelManipulatorValueChanged", VoxelValue);
         }
 
         private void OnDestroy()
         {
             AddAction.performed -= OnAddAction;
             RemoveAction.performed -= OnRemoveAction;
+            IncrementValueAction.performed -= OnIncrementValueAction;
+            DecrementValueAction.performed -= OnDecrementValueAction;
         }
     }
 }

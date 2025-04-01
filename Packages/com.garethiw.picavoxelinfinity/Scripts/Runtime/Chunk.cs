@@ -156,7 +156,7 @@ namespace PicaVoxel
             return Voxels[i];
         }
         
-        public void SetVoxelByChangeEvent(VoxelChangeEventArgs e, bool persist = false)
+        public void SetVoxelByEditEvent(VoxelEditEventArgs e, bool persist = false)
         {
             Voxel v = new Voxel()
             {

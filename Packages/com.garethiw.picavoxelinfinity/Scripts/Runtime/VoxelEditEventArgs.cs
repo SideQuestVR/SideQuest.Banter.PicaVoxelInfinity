@@ -5,9 +5,9 @@ using UnityEngine;
 namespace PicaVoxel
 {
     [Serializable, Inspectable]
-    public class VoxelChangeEventArgs
+    public class VoxelEditEventArgs
     {
-        public VoxelChangeEventArgs(string volumeId, int chunkX, int chunkY, int chunkZ, int voxelX, int voxelY, int voxelZ, bool voxelActive, byte voxelValue, Color voxelColor=new())
+        public VoxelEditEventArgs(string volumeId, int chunkX, int chunkY, int chunkZ, int voxelX, int voxelY, int voxelZ, bool voxelActive, byte voxelValue, Color voxelColor=new())
         {
             VolumeId = volumeId;
             ChunkX = chunkX;

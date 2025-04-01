@@ -6,10 +6,10 @@ using Unity.VisualScripting;
 
 namespace PicaVoxel
 {
-    [UnitTitle("On Voxel Manipulator Change")]
-    [UnitShortTitle("On Voxel Manipulator Change")]
+    [UnitTitle("On Voxel Manipulator Active Changed")]
+    [UnitShortTitle("On Voxel Manipulator Active Changed")]
     [UnitCategory("Events\\PicaVoxel")]
-    public class OnVoxelManipulatorChange : EventUnit<VoxelChangeEventArgs>
+    public class OnVoxelManipulatorActiveChanged : EventUnit<bool>
     {
         [DoNotSerialize]
         public ValueOutput result;
@@ -18,23 +18,23 @@ namespace PicaVoxel
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook("OnVoxelManipulatorChange");
+            return new EventHook("OnVoxelManipulatorActiveChanged");
         }
 
         protected override void Definition()
         {
             base.Definition();
 
-            result = ValueOutput<VoxelChangeEventArgs>("Change");
+            result = ValueOutput<bool>("ActiveChanged");
         }
 
-        protected override bool ShouldTrigger(Flow flow, VoxelChangeEventArgs data)
+        protected override bool ShouldTrigger(Flow flow, bool data)
         {
             return true;
         }
 
         // Setting the value on our port.
-        protected override void AssignArguments(Flow flow, VoxelChangeEventArgs data)
+        protected override void AssignArguments(Flow flow, bool data)
         {
             flow.SetValue(result, data);
         }
