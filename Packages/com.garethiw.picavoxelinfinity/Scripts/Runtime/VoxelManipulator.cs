@@ -119,6 +119,9 @@ namespace PicaVoxel
 
         public bool AddVoxel()
         {
+            if (!IsActive)
+                return false;
+            
             Ray ray = new Ray(transform.position, transform.forward);
             Debug.DrawRay(ray.origin, ray.direction * RayDistanceMinMax.y, Color.magenta, 0.5f);
             Volume vol = VolumeRaycast(ray);
@@ -159,6 +162,9 @@ namespace PicaVoxel
         
         public bool RemoveVoxel()
         {
+            if (!IsActive)
+                return false;
+            
             Ray ray = new Ray(transform.position, transform.forward);
             Debug.DrawRay(ray.origin, ray.direction * RayDistanceMinMax.y, Color.magenta, 0.5f);
             Volume vol = VolumeRaycast(ray);
