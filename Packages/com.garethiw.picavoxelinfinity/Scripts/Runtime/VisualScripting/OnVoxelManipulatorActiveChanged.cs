@@ -25,7 +25,7 @@ namespace PicaVoxel
         {
             base.Definition();
 
-            result = ValueOutput<bool>("ActiveChanged");
+            result = ValueOutput<bool>("Active");
         }
 
         protected override bool ShouldTrigger(Flow flow, bool data)
