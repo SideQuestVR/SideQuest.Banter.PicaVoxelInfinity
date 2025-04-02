@@ -411,7 +411,7 @@ namespace PicaVoxel
         static bool IsVoxelAt(int x, int y, int z, ref Voxel[] invoxels, Chunk chunk, Chunk[] nbs, int ub0, int ub1, int ub2)
         {
             if(!(x<0 || x > ub0 || y < 0 || y > ub1 || z < 0 || z > ub2))
-                return invoxels[x + (ub0 + 1)*(y + (ub1 + 1)*z)].Active;
+                return invoxels[x + (ub0 + 1)*(y + (ub1 + 1)*z)].State==1;
             
             int xcs = chunk.Volume.ChunkSize;
             int ycs = chunk.Volume.ChunkSize;
