@@ -140,7 +140,7 @@ namespace PicaVoxel
                 return;
             _cursorUpdate = 0f;
             
-            _selectedVolume = VolumeRaycast(ray, _lastAction==0?-(0.01f*_lastVoxelSize):(0.01f*_lastVoxelSize), out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
+            _selectedVolume = VolumeRaycast(ray, _lastAction==0?-(0.001f*_lastVoxelSize):(0.001f*_lastVoxelSize), out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
             
             if (UseLineRenderer && _lineRenderer && hitPos.HasValue)
             {
