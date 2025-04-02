@@ -46,14 +46,17 @@ namespace PicaVoxel
     {
         public int VoxelValue;
         public bool AllowOrientation;
+        public bool HasTransparency;
         public Mesh Mesh;
     }
 
     public class CustomBlockData
     {
+        public bool HasMesh;
         public Vector3[] Vertices;
         public Vector4[] UVs;
         public int[] Indices;
+        public bool HasTransparency;
     }
     
 #if UNITY_EDITOR
@@ -169,15 +172,20 @@ namespace PicaVoxel
             foreach (CustomBlock cb in CustomBlocks)
             {
                 CustomBlockData data = new CustomBlockData();
-                data.Vertices = new Vector3[cb.Mesh.vertexCount];
-                data.UVs = new Vector4[cb.Mesh.vertexCount];
-                data.Indices = new int[cb.Mesh.triangles.Length];
-                for (var i = 0; i < cb.Mesh.vertices.Length; i++)
-                    data.Vertices[i] = (cb.Mesh.vertices[i] * VoxelSize) + (Vector3.one * (VoxelSize * 0.5f));
-                for (var i = 0; i < cb.Mesh.uv.Length; i++)
-                    data.UVs[i]= new Vector4(cb.Mesh.uv[i].x,cb.Mesh.uv[i].y,cb.VoxelValue,0);
-                for (var i = 0; i < cb.Mesh.triangles.Length; i++)
-                    data.Indices[i] = cb.Mesh.triangles[i];
+                if (cb.Mesh != null)
+                {
+                    data.Vertices = new Vector3[cb.Mesh.vertexCount];
+                    data.UVs = new Vector4[cb.Mesh.vertexCount];
+                    data.Indices = new int[cb.Mesh.triangles.Length];
+                    for (var i = 0; i < cb.Mesh.vertices.Length; i++)
+                        data.Vertices[i] = (cb.Mesh.vertices[i] * VoxelSize) + (Vector3.one * (VoxelSize * 0.5f));
+                    for (var i = 0; i < cb.Mesh.uv.Length; i++)
+                        data.UVs[i] = new Vector4(cb.Mesh.uv[i].x, cb.Mesh.uv[i].y, cb.VoxelValue, 0);
+                    for (var i = 0; i < cb.Mesh.triangles.Length; i++)
+                        data.Indices[i] = cb.Mesh.triangles[i];
+                    data.HasMesh = true;
+                }
+                data.HasTransparency = cb.HasTransparency;
                 CustomBlocksDict.Add(cb.VoxelValue, data);
             }
         }

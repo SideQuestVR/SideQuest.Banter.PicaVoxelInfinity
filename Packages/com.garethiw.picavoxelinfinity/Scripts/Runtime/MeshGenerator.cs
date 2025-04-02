@@ -286,47 +286,75 @@ namespace PicaVoxel
 
             VoxelFace vf = new VoxelFace();
 
-            for (int z = 0; z < zSize; z++)
-                for (int y = 0; y < ySize; y++)
-                    for (int x = 0; x < xSize; x++)
+            bool skippass = true;
+            for(int pass=0;pass<2;pass++)
+            {
+                for (int z = 0; z < zSize; z++)
+                {
+                    for (int y = 0; y < ySize; y++)
                     {
-                        Voxel v = invoxels[(x + xOffset) + (ub0 + 1)*((y + yOffset) + (ub1 + 1)*(z + zOffset))];
-                        if (v.State == 0) continue;
-
-                        Vector3 worldOffset = (new Vector3(x, y, z));
-
-                        if (cbs.TryGetValue(v.Value, out CustomBlockData cb))
+                        for (int x = 0; x < xSize; x++)
                         {
-                            int startIndex = vertices.Count;
-                            foreach(var vert in cb.Vertices)
-                                vertices.Add(worldOffset+vert);
-                            foreach (var uv in cb.UVs)
-                                uvs.Add(new Vector4(uv.x,uv.y,v.Value,-1));
-                            foreach(var tri in cb.Indices)
-                                indexes.Add(startIndex+tri);
-                            for(var i = 0; i < cb.Vertices.Length; i++)
-                                colors.Add(Color.white);
-                            continue;
-                        }
-                        
-                        for (int f = 0; f < 6; f++)
-                        {
-                            GetVoxelFace(vf, x, y, z, f, ref invoxels, chunk, nbs, voxelSize, xOffset, yOffset, zOffset, xSize, ySize, zSize, ub0, ub1, ub2, selfShadeIntensity);
+                            Voxel v = invoxels[(x + xOffset) + (ub0 + 1)*((y + yOffset) + (ub1 + 1)*(z + zOffset))];
+                            if (v.State == 0) continue;
 
-                            if (vf.Active)
+                            Vector3 worldOffset = (new Vector3(x, y, z));
+                            bool tpCube = false;
+                            
+                            if (cbs.TryGetValue(v.Value, out CustomBlockData cb))
                             {
-                                switch (f)
+                                if (cb.HasTransparency && pass == 0)
                                 {
-                                    case 0: Quad(worldOffset + new Vector3(0, 1, 0), worldOffset + new Vector3(1, 1, 0), worldOffset + new Vector3(1, 0, 0), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, false, selfShadeIntensity, vertices, indexes, colors, uvs); break;
-                                    case 1: Quad(worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(1, 1, 1), worldOffset + new Vector3(1, 0, 1), worldOffset + new Vector3(0, 0, 1), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
-                                    case 2: Quad(worldOffset + new Vector3(1, 1, 0), worldOffset + new Vector3(1, 1, 1), worldOffset + new Vector3(1, 0, 1), worldOffset + new Vector3(1, 0, 0), f, voxelSize, overlapAmount, vf, false, selfShadeIntensity, vertices, indexes, colors, uvs); break;
-                                    case 3: Quad(worldOffset + new Vector3(0, 1, 0), worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(0, 0, 1), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
-                                    case 4: Quad(worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(1, 1, 1), worldOffset + new Vector3(1, 1, 0), worldOffset + new Vector3(0, 1, 0), f, voxelSize, overlapAmount, vf, false, selfShadeIntensity, vertices, indexes, colors, uvs); break;
-                                    case 5: Quad(worldOffset + new Vector3(0, 0, 1), worldOffset + new Vector3(1, 0, 1), worldOffset + new Vector3(1, 0, 0), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
+                                    skippass = false;
+                                    continue;
+                                }
+                                if (!cb.HasTransparency && pass==1)
+                                    continue;
+                                if (cb.HasMesh)
+                                {
+                                    int startIndex = vertices.Count;
+                                    foreach (var vert in cb.Vertices)
+                                        vertices.Add(worldOffset + vert);
+                                    foreach (var uv in cb.UVs)
+                                        uvs.Add(new Vector4(uv.x, uv.y, v.Value, -1));
+                                    foreach (var tri in cb.Indices)
+                                        indexes.Add(startIndex + tri);
+                                    for (var i = 0; i < cb.Vertices.Length; i++)
+                                        colors.Add(Color.white);
+                                    continue;
+                                }
+                                else
+                                {
+                                    tpCube = true;
+                                }
+                            }
+
+                            if (pass == 1 && !tpCube)
+                                continue;
+                            for (int f = 0; f < 6; f++)
+                            {
+                                GetVoxelFace(vf, x, y, z, f, ref invoxels, chunk, nbs, voxelSize, xOffset, yOffset, zOffset, xSize, ySize, zSize, ub0, ub1, ub2, selfShadeIntensity);
+
+                                if (vf.Active)
+                                {
+                                    switch (f)
+                                    {
+                                        case 0: Quad(worldOffset + new Vector3(0, 1, 0), worldOffset + new Vector3(1, 1, 0), worldOffset + new Vector3(1, 0, 0), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, false, selfShadeIntensity, vertices, indexes, colors, uvs); break;
+                                        case 1: Quad(worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(1, 1, 1), worldOffset + new Vector3(1, 0, 1), worldOffset + new Vector3(0, 0, 1), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
+                                        case 2: Quad(worldOffset + new Vector3(1, 1, 0), worldOffset + new Vector3(1, 1, 1), worldOffset + new Vector3(1, 0, 1), worldOffset + new Vector3(1, 0, 0), f, voxelSize, overlapAmount, vf, false, selfShadeIntensity, vertices, indexes, colors, uvs); break;
+                                        case 3: Quad(worldOffset + new Vector3(0, 1, 0), worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(0, 0, 1), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
+                                        case 4: Quad(worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(1, 1, 1), worldOffset + new Vector3(1, 1, 0), worldOffset + new Vector3(0, 1, 0), f, voxelSize, overlapAmount, vf, false, selfShadeIntensity, vertices, indexes, colors, uvs); break;
+                                        case 5: Quad(worldOffset + new Vector3(0, 0, 1), worldOffset + new Vector3(1, 0, 1), worldOffset + new Vector3(1, 0, 0), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
+                                    }
                                 }
                             }
                         }
                     }
+                }
+
+                if (skippass)
+                    break;
+            }
 
 
           
