@@ -39,7 +39,7 @@ namespace PicaVoxel
         public UnityEvent<int> OnValueChanged;
         public UnityEvent<bool> OnActiveChanged;
         
-        private RaycastHit[] _hits = new RaycastHit[1];
+        private RaycastHit _hitInfo;
         private Volume _selectedVolume;
         private Chunk _selectedChunk;
         private (int x, int y, int z) _selectedVoxel;
@@ -109,10 +109,10 @@ namespace PicaVoxel
             Ray ray = new Ray(transform.position, transform.forward);
             if (UseLineRenderer && _lineRenderer && _lineRenderer.enabled)
             {
-                int hits = Physics.RaycastNonAlloc(ray.origin, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
-                if (hits > 0)
+                bool hit = Physics.Raycast(ray.origin, ray.direction, out _hitInfo, RayDistanceMinMax.y, LayerMask);
+                if (hit)
                 {
-                    _lastLRPos = _hits[0].point;
+                    _lastLRPos = _hitInfo.point;
                     _lineRenderer.SetPosition(0, transform.position);
                     for (int i = 1; i < _lineRenderer.positionCount; i++)
                     {
@@ -177,13 +177,13 @@ namespace PicaVoxel
             Volume vol = VolumeRaycast(ray);
             if (!vol) return false;
 
-            if ((_hits[0].point - transform.position).magnitude < (RayDistanceMinMax.x*_lastVoxelSize))
+            if ((_hitInfo.point - transform.position).magnitude < (RayDistanceMinMax.x*_lastVoxelSize))
                 return false;
             
-            if (vol.GetVoxelAtWorldPosition(_hits[0].point + (ray.direction * (0.1f*_lastVoxelSize)), out Chunk _, out (int x, int y, int z) _) == null)
+            if (vol.GetVoxelAtWorldPosition(_hitInfo.point + (ray.direction * (0.1f*_lastVoxelSize)), out Chunk _, out (int x, int y, int z) _) == null)
                 return false;
             
-            Voxel? v = vol.SetVoxelAtWorldPosition(_hits[0].point - (ray.direction * (0.1f*_lastVoxelSize)), new Voxel(){Active = true, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
+            Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point - (ray.direction * (0.1f*_lastVoxelSize)), new Voxel(){Active = true, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
 
             _lastAction = 0;
 
@@ -220,7 +220,7 @@ namespace PicaVoxel
             Volume vol = VolumeRaycast(ray);
             if (!vol) return false;
 
-            Voxel? v = vol.SetVoxelAtWorldPosition(_hits[0].point + (ray.direction *(0.1f*_lastVoxelSize)), new Voxel(){Active = false}, out Chunk chunk, out (int x, int y, int z) pos);
+            Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point + (ray.direction *(0.1f*_lastVoxelSize)), new Voxel(){Active = false}, out Chunk chunk, out (int x, int y, int z) pos);
 
             _lastAction = 1;
             
@@ -250,10 +250,10 @@ namespace PicaVoxel
         private Volume VolumeRaycast(Ray ray)
         {
             
-            int hits = Physics.RaycastNonAlloc(ray.origin, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
-            if (hits > 0)
+            bool hit = Physics.Raycast(ray.origin, ray.direction, out _hitInfo, RayDistanceMinMax.y, LayerMask);
+            if (hit)
             {
-                return _hits[0].collider.gameObject.GetComponentInParent<Volume>();
+                return _hitInfo.collider.gameObject.GetComponentInParent<Volume>();
             }
             Debug.DrawRay(ray.origin, ray.direction * RayDistanceMinMax.y, Color.red, 0.5f);
             return null;
@@ -266,15 +266,15 @@ namespace PicaVoxel
             voxelPos = (0, 0, 0);
             hitPos = null;
             
-            int hits = Physics.RaycastNonAlloc(ray.origin, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
-            if (hits > 0)
+            bool hit = Physics.Raycast(ray.origin, ray.direction, out _hitInfo, RayDistanceMinMax.y, LayerMask);
+            if (hit)
             {
-                hitPos = _hits[0].point;
-                vol = _hits[0].collider.gameObject.GetComponentInParent<Volume>();
+                hitPos = _hitInfo.point;
+                vol = _hitInfo.collider.gameObject.GetComponentInParent<Volume>();
                 if (vol == null)
                     return vol;
 
-                vol.GetVoxelAtWorldPosition(_hits[0].point+ (ray.direction *offset), out chunk, out voxelPos);
+                vol.GetVoxelAtWorldPosition(_hitInfo.point+ (ray.direction *offset), out chunk, out voxelPos);
                 return vol;
             }
             
