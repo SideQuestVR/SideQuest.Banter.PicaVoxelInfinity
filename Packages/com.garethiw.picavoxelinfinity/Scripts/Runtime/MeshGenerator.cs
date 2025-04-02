@@ -290,7 +290,7 @@ namespace PicaVoxel
                 for (int y = 0; y < ySize; y++)
                     for (int x = 0; x < xSize; x++)
                     {
-                        if (invoxels[xOffset + x + (ub0 + 1) * (yOffset + y + (ub1 + 1) * (zOffset + z))].Active == false) continue;
+                        if (invoxels[xOffset + x + (ub0 + 1) * (yOffset + y + (ub1 + 1) * (zOffset + z))].State == 0) continue;
 
                         Vector3 worldOffset = (new Vector3(x, y, z));
 
@@ -321,7 +321,7 @@ namespace PicaVoxel
         {
             Voxel v = invoxels[(x + xOffset) + (ub0 + 1)*((y + yOffset) + (ub1 + 1)*(z + zOffset))];
 
-            voxelFace.Active = v.Active;
+            voxelFace.Active = v.State==1;
             voxelFace.Value = v.Value;
             voxelFace.Color = ColorToInt(v.Color);
             voxelFace.VertShade = 0;
@@ -449,7 +449,7 @@ namespace PicaVoxel
             }
 
             Chunk cc = nbs[ccpx + 3 * (ccpy + 3 * ccpz)];
-            return (cc is not null) && cc.Voxels[vcpx + xcs * (vcpy + ycs * vcpz)].Active;
+            return (cc is not null) && cc.Voxels[vcpx + xcs * (vcpy + ycs * vcpz)].State==1;
             
             //|| x > ub0 || y < 0 || y > ub1 || z < 0 || z > ub2) return false;
             return invoxels[x + (ub0 + 1)*(y + (ub1 + 1)*z)].Active;
