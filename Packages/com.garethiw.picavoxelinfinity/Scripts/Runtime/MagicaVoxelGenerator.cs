@@ -69,7 +69,7 @@ namespace PicaVoxel
             
             Voxel vox = _voxels[index];
             voxel.Value = vox.Value;
-            voxel.Active = vox.Active;
+            voxel.State = vox.State;
             voxel.Color = vox.Color;
 
 
@@ -99,7 +99,7 @@ namespace PicaVoxel
                                     _voxels[x + _modelSize.x*(y + _modelSize.y*z)] = new Voxel()
                                     {
                                         Color = loader.Colors[model.Data[x,y,z]], 
-                                        Active = true, 
+                                        State = 1, 
                                         Value = 1
                                     };
                 }

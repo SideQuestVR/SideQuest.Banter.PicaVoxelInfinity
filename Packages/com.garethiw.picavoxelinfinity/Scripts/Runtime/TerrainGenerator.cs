@@ -46,7 +46,7 @@ namespace PicaVoxel
             //     Debug.Log(val);
             val *= (HeightMax-HeightMin);
             //Debug.Log(val);
-            voxel.Active = y < HeightMin + val;
+            voxel.State = (byte)(y < HeightMin + val?1:0);
             voxel.Value = y<=BedrockHeight? (byte)4: ((y+1) < HeightMin +val) ? (byte)1 : (byte)0;
 
             return true;
