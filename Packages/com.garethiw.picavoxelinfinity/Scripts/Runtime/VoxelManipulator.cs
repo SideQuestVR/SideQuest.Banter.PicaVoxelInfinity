@@ -156,7 +156,6 @@ namespace PicaVoxel
                 return;
             }
             
-            Debug.Log($"Has hit chunk {_selectedChunk.Position}");
             Debug.DrawLine(ray.origin, hitPos.Value, Color.magenta, 0.5f);
             
             _lastVoxelSize = _selectedVolume.VoxelSize;
