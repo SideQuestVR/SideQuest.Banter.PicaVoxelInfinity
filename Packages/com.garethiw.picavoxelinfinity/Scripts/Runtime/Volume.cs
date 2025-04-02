@@ -13,6 +13,7 @@ using System.Threading;
 using UnityEngine;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Unity.VisualScripting;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 using Debug = UnityEngine.Debug;
@@ -38,6 +39,21 @@ namespace PicaVoxel
         Greedy,
         Culled,
         Marching
+    }
+
+    [Serializable]
+    public class CustomBlock
+    {
+        public int VoxelValue;
+        public bool AllowOrientation;
+        public Mesh Mesh;
+    }
+
+    public class CustomBlockData
+    {
+        public Vector3[] Vertices;
+        public Vector4[] UVs;
+        public int[] Indices;
     }
     
 #if UNITY_EDITOR
@@ -68,6 +84,10 @@ namespace PicaVoxel
         
         public Dictionary<(int,int,int), Chunk> Chunks = new();
 
+        public CustomBlock[] CustomBlocks = Array.Empty<CustomBlock>();
+        [DoNotSerialize]
+        public Dictionary<int, CustomBlockData> CustomBlocksDict = new();
+        
         // Infinite mode will be for infinite terrain, which will keep generating as you move
         // Non-infinite will only add chunks when edited, and all chunks will be visible/rendered at startup
         public bool IsInfinite = false;
@@ -113,6 +133,7 @@ namespace PicaVoxel
         private bool _isFirstPass;
         private Vector3 _lastCamOffset;
         
+        
         private void OnEnable()
         {
             if (string.IsNullOrEmpty(Identifier))
@@ -143,6 +164,22 @@ namespace PicaVoxel
             _lastCamOffset = _cameraTransform.position- (transform.position-(ChunkSize * VoxelSize * 0.5f * Vector3.one));
 
             _isFirstPass = true;
+
+            CustomBlocksDict.Clear();
+            foreach (CustomBlock cb in CustomBlocks)
+            {
+                CustomBlockData data = new CustomBlockData();
+                data.Vertices = new Vector3[cb.Mesh.vertexCount];
+                data.UVs = new Vector4[cb.Mesh.vertexCount];
+                data.Indices = new int[cb.Mesh.triangles.Length];
+                for (var i = 0; i < cb.Mesh.vertices.Length; i++)
+                    data.Vertices[i] = (cb.Mesh.vertices[i] * VoxelSize) + (Vector3.one * (VoxelSize * 0.5f));
+                for (var i = 0; i < cb.Mesh.uv.Length; i++)
+                    data.UVs[i]= new Vector4(cb.Mesh.uv[i].x,cb.Mesh.uv[i].y,cb.VoxelValue,0);
+                for (var i = 0; i < cb.Mesh.triangles.Length; i++)
+                    data.Indices[i] = cb.Mesh.triangles[i];
+                CustomBlocksDict.Add(cb.VoxelValue, data);
+            }
         }
 
         Queue<Chunk> _freeChunks = new();

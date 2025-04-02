@@ -169,6 +169,7 @@ MonoBehaviour:
   ChunkSize: 16
   VoxelSize: 0.1
   Pivot: {x: 0, y: 0, z: 0}
+  CustomBlocks: []
   IsInfinite: 0
   InfiniteChunkRadius: 0
   InfiniteChunkBounds: {x: 0, y: 0, z: 0}
@@ -243,6 +244,7 @@ MonoBehaviour:
   ChunkSize: 16
   VoxelSize: 0.1
   Pivot: {x: 0, y: 0, z: 0}
+  CustomBlocks: []
   IsInfinite: 0
   InfiniteChunkRadius: 0
   InfiniteChunkBounds: {x: 0, y: 0, z: 0}
@@ -551,14 +553,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f43865db9aa34fc2bd523391265c3aed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  IsActive: 0
+  IsActive: 1
   RayDistanceMinMax: {x: 1.75, y: 50}
   LayerMask:
     serializedVersion: 2
     m_Bits: 1
   MaxValue: 5
   IncludeInactiveInValueRange: 1
-  VoxelValue: 3
+  VoxelValue: 5
   VoxelColor: {r: 1, g: 1, b: 1, a: 1}
   CursorPrefab: {fileID: 823897801914889954, guid: 9e54829b76f3712418a4e924ab987740, type: 3}
   UseLineRenderer: 1
@@ -779,6 +781,9 @@ MonoBehaviour:
   ChunkSize: 16
   VoxelSize: 1
   Pivot: {x: 0, y: 0, z: 0}
+  CustomBlocks:
+  - VoxelValue: 5
+    Mesh: {fileID: -122999701322966394, guid: 7e40043dc4958bd43b2a927c5890facc, type: 3}
   IsInfinite: 1
   InfiniteChunkRadius: 12
   InfiniteChunkBounds: {x: 0, y: 2, z: 0}
@@ -896,6 +901,7 @@ MonoBehaviour:
   ChunkSize: 16
   VoxelSize: 0.1
   Pivot: {x: 0, y: 0, z: 0}
+  CustomBlocks: []
   IsInfinite: 0
   InfiniteChunkRadius: 0
   InfiniteChunkBounds: {x: 0, y: 0, z: 0}

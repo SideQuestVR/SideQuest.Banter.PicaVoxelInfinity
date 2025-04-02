@@ -181,8 +181,15 @@ namespace PicaVoxel
             
             if (vol.GetVoxelAtWorldPosition(_hitInfo.point + (ray.direction * (0.1f*_lastVoxelSize)), out Chunk _, out (int x, int y, int z) _) == null)
                 return false;
+
+            // Custom blocks have state > 1, 2-5 is block orientation north,east,south,west
+            byte state = 1;
+            if (_selectedVolume.CustomBlocksDict.TryGetValue(VoxelValue, out var data))
+            {
+                state = 2;
+            }
             
-            Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point - (ray.direction * (0.1f*_lastVoxelSize)), new Voxel(){State = 1, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
+            Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point - (ray.direction * (0.1f*_lastVoxelSize)), new Voxel(){State = state, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
 
             _lastAction = 0;
 

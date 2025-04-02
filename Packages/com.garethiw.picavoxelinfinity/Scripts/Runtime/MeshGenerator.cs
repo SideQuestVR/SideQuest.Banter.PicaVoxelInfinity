@@ -277,7 +277,7 @@ namespace PicaVoxel
           
         }
         
-        public static void GenerateCulled(List<Vector3> vertices, List<Vector4> uvs, List<Color32> colors, List<int> indexes, ref Voxel[] invoxels,Chunk chunk, Chunk[] nbs, float voxelSize,float overlapAmount, int xOffset, int yOffset, int zOffset, int xSize, int ySize, int zSize, int ub0, int ub1, int ub2, float selfShadeIntensity)
+        public static void GenerateCulled(List<Vector3> vertices, List<Vector4> uvs, List<Color32> colors, List<int> indexes, ref Voxel[] invoxels,Chunk chunk, Chunk[] nbs, Dictionary<int, CustomBlockData> cbs, float voxelSize,float overlapAmount, int xOffset, int yOffset, int zOffset, int xSize, int ySize, int zSize, int ub0, int ub1, int ub2, float selfShadeIntensity)
         {
             vertices.Clear();
             uvs.Clear();
@@ -290,10 +290,25 @@ namespace PicaVoxel
                 for (int y = 0; y < ySize; y++)
                     for (int x = 0; x < xSize; x++)
                     {
-                        if (invoxels[xOffset + x + (ub0 + 1) * (yOffset + y + (ub1 + 1) * (zOffset + z))].State == 0) continue;
+                        Voxel v = invoxels[(x + xOffset) + (ub0 + 1)*((y + yOffset) + (ub1 + 1)*(z + zOffset))];
+                        if (v.State == 0) continue;
 
                         Vector3 worldOffset = (new Vector3(x, y, z));
 
+                        if (cbs.TryGetValue(v.Value, out CustomBlockData cb))
+                        {
+                            int startIndex = vertices.Count;
+                            foreach(var vert in cb.Vertices)
+                                vertices.Add(worldOffset+vert);
+                            foreach (var uv in cb.UVs)
+                                uvs.Add(new Vector4(uv.x,uv.y,v.Value,-1));
+                            foreach(var tri in cb.Indices)
+                                indexes.Add(startIndex+tri);
+                            for(var i = 0; i < cb.Vertices.Length; i++)
+                                colors.Add(Color.white);
+                            continue;
+                        }
+                        
                         for (int f = 0; f < 6; f++)
                         {
                             GetVoxelFace(vf, x, y, z, f, ref invoxels, chunk, nbs, voxelSize, xOffset, yOffset, zOffset, xSize, ySize, zSize, ub0, ub1, ub2, selfShadeIntensity);
