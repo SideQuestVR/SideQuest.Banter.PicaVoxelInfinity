@@ -109,7 +109,7 @@ namespace PicaVoxel
             Ray ray = new Ray(transform.position, transform.forward);
             if (UseLineRenderer && _lineRenderer && _lineRenderer.enabled)
             {
-                int hits = Physics.SphereCastNonAlloc(ray.origin, 0.1f*_lastVoxelSize, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
+                int hits = Physics.RaycastNonAlloc(ray.origin, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
                 if (hits > 0)
                 {
                     _lastLRPos = _hits[0].point;
@@ -249,7 +249,7 @@ namespace PicaVoxel
         private Volume VolumeRaycast(Ray ray)
         {
             
-            int hits = Physics.SphereCastNonAlloc(ray.origin, (0.1f*_lastVoxelSize), ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
+            int hits = Physics.RaycastNonAlloc(ray.origin, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
             if (hits > 0)
             {
                 return _hits[0].collider.gameObject.GetComponentInParent<Volume>();
@@ -265,7 +265,7 @@ namespace PicaVoxel
             voxelPos = (0, 0, 0);
             hitPos = null;
             
-            int hits = Physics.SphereCastNonAlloc(ray.origin, (0.1f*_lastVoxelSize), ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
+            int hits = Physics.RaycastNonAlloc(ray.origin, ray.direction, _hits, RayDistanceMinMax.y, LayerMask);
             if (hits > 0)
             {
                 hitPos = _hits[0].point;
