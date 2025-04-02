@@ -29,7 +29,8 @@ namespace PicaVoxel
     {
         public const int BYTE_SIZE = 6;
 
-        public bool Active;
+        public bool Active => State!=0;
+        public byte State;
         public byte Value;
         public Color32 Color;
         
@@ -41,12 +42,12 @@ namespace PicaVoxel
         {
             if (bytes.Length != BYTE_SIZE)
             {
-                Active = false;
+                State = 0;
                 Value = 128;
                 Color = UnityEngine.Color.black;
             }
 
-            Active = bytes[0]==1;
+            State = bytes[0];
             Value = bytes[1];
             Color = new Color32(bytes[2], bytes[3], bytes[4], bytes[5]);
         }
@@ -59,7 +60,7 @@ namespace PicaVoxel
         {
             byte[] bytes = new byte[BYTE_SIZE];
 
-            bytes[0] = (byte)(Active?1:0);
+            bytes[0] = State;
             bytes[1] = Value;
             bytes[2] = Color.r;
             bytes[3] = Color.g;
@@ -71,7 +72,7 @@ namespace PicaVoxel
 
         public override string ToString()
         {
-            return $"A: {Active}, V: {Value}, C: {Color}";
+            return $"A: {State}, V: {Value}, C: {Color}";
         }
     }
 

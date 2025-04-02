@@ -160,7 +160,7 @@ namespace PicaVoxel
         {
             Voxel v = new Voxel()
             {
-                Active = e.VoxelActive,
+                State = e.VoxelState,
                 Value = e.VoxelValue,
                 Color = e.VoxelColor
             };

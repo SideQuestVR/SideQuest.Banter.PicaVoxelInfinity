@@ -182,7 +182,7 @@ namespace PicaVoxel
             if (vol.GetVoxelAtWorldPosition(_hitInfo.point + (ray.direction * (0.1f*_lastVoxelSize)), out Chunk _, out (int x, int y, int z) _) == null)
                 return false;
             
-            Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point - (ray.direction * (0.1f*_lastVoxelSize)), new Voxel(){Active = true, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
+            Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point - (ray.direction * (0.1f*_lastVoxelSize)), new Voxel(){State = 1, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
 
             _lastAction = 0;
 
@@ -198,7 +198,7 @@ namespace PicaVoxel
                     voxelX: pos.x,
                     voxelY: pos.y,
                     voxelZ: pos.z,
-                    voxelActive: v.Value.Active,
+                    voxelState: v.Value.State,
                     voxelValue: v.Value.Value,
                     voxelColor: v.Value.Color
                 );
@@ -219,7 +219,7 @@ namespace PicaVoxel
             Volume vol = VolumeRaycast(ray);
             if (!vol) return false;
 
-            Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point + (ray.direction *(0.1f*_lastVoxelSize)), new Voxel(){Active = false}, out Chunk chunk, out (int x, int y, int z) pos);
+            Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point + (ray.direction *(0.1f*_lastVoxelSize)), new Voxel(){State = 0}, out Chunk chunk, out (int x, int y, int z) pos);
 
             _lastAction = 1;
             
@@ -235,7 +235,7 @@ namespace PicaVoxel
                         voxelX: pos.x,
                         voxelY: pos.y,
                         voxelZ: pos.z,
-                        voxelActive: v.Value.Active,
+                        voxelState: v.Value.State,
                         voxelValue: v.Value.Value,
                         voxelColor: v.Value.Color
                     );
