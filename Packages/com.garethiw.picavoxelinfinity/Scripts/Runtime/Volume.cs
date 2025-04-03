@@ -57,6 +57,7 @@ namespace PicaVoxel
         public Vector4[] UVs;
         public int[] Indices;
         public bool HasTransparency;
+        public bool AllowOrientation;
     }
     
 #if UNITY_EDITOR
@@ -178,12 +179,13 @@ namespace PicaVoxel
                     data.UVs = new Vector4[cb.Mesh.vertexCount];
                     data.Indices = new int[cb.Mesh.triangles.Length];
                     for (var i = 0; i < cb.Mesh.vertices.Length; i++)
-                        data.Vertices[i] = (cb.Mesh.vertices[i] * VoxelSize) + (Vector3.one * (VoxelSize * 0.5f));
+                        data.Vertices[i] = (cb.Mesh.vertices[i] * VoxelSize);
                     for (var i = 0; i < cb.Mesh.uv.Length; i++)
                         data.UVs[i] = new Vector4(cb.Mesh.uv[i].x, cb.Mesh.uv[i].y, cb.VoxelValue, 0);
                     for (var i = 0; i < cb.Mesh.triangles.Length; i++)
                         data.Indices[i] = cb.Mesh.triangles[i];
                     data.HasMesh = true;
+                    data.AllowOrientation = cb.AllowOrientation;
                 }
                 data.HasTransparency = cb.HasTransparency;
                 CustomBlocksDict.Add(cb.VoxelValue, data);

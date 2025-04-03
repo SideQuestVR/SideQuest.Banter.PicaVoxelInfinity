@@ -312,9 +312,12 @@ namespace PicaVoxel
                                     continue;
                                 if (cb.HasMesh)
                                 {
+                                    Quaternion rot = Quaternion.identity;
+                                    if(cb.AllowOrientation)
+                                        rot = Quaternion.Euler(0, 90f * (v.State-2), 0);
                                     int startIndex = vertices.Count;
                                     foreach (var vert in cb.Vertices)
-                                        vertices.Add(worldOffset + vert);
+                                        vertices.Add(worldOffset +  (Vector3.one * (voxelSize * 0.5f)) + (rot*vert));
                                     foreach (var uv in cb.UVs)
                                         uvs.Add(new Vector4(uv.x, uv.y, v.Value, -1));
                                     foreach (var tri in cb.Indices)

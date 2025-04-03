@@ -49,6 +49,7 @@ namespace PicaVoxel
         private LineRenderer _lineRenderer;
         private Vector3 _lastLRPos;
         private float _lastVoxelSize = 1f;
+        private int _orientation;
         
         private void Start()
         {
@@ -160,6 +161,9 @@ namespace PicaVoxel
             
             _lastVoxelSize = _selectedVolume.VoxelSize;
 
+            _orientation = GetHitOrientation(_hitInfo, _selectedChunk.transform, ray.direction);
+            Debug.Log($"Orientation: {_orientation}");
+            
             _cursor.transform.localScale = new Vector3(1.01f,1.01f,1.01f) * _selectedVolume.VoxelSize;
             _cursor.transform.rotation = _selectedVolume.transform.rotation;
             _cursor.transform.position = _selectedChunk.transform.TransformPoint(new Vector3(_selectedVoxel.x, _selectedVoxel.y, _selectedVoxel.z)*_selectedVolume.VoxelSize + (Vector3.one * (_selectedVolume.VoxelSize * 0.5f)));
@@ -184,9 +188,11 @@ namespace PicaVoxel
 
             // Custom blocks have state > 1, 2-5 is block orientation north,east,south,west
             byte state = 1;
-            if (_selectedVolume.CustomBlocksDict.TryGetValue(VoxelValue, out var data))
+            if (_selectedVolume.CustomBlocksDict.TryGetValue(VoxelValue, out CustomBlockData data))
             {
                 state = 2;
+                if(data.AllowOrientation)
+                    state += (byte)GetHitOrientation(_hitInfo, _selectedChunk.transform, ray.direction);
             }
             
             Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point - (ray.direction * (0.1f*_lastVoxelSize)), new Voxel(){State = state, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
@@ -335,6 +341,38 @@ namespace PicaVoxel
             VoxelValue = (byte)(VoxelValue % (MaxValue+1));
             OnValueChanged?.Invoke(VoxelValue);
             EventBus.Trigger("OnVoxelManipulatorValueChanged", (int)VoxelValue);
+        }
+        
+        private int GetHitOrientation(RaycastHit hit, Transform localReference, Vector3 fallbackDirection)
+        {
+            // Transform the hit normal into local space
+            Vector3 localNormal = localReference.InverseTransformDirection(hit.normal);
+
+            // Reverse it to get the direction of the impact
+            Vector3 impactDirection = -localNormal;
+
+            // Check if the normal is mostly vertical (up/down)
+            if (Mathf.Abs(impactDirection.y) > Mathf.Max(Mathf.Abs(impactDirection.x), Mathf.Abs(impactDirection.z)))
+            {
+                // Transform fallback direction into local space
+                Vector3 localFallback = localReference.InverseTransformDirection(fallbackDirection);
+
+                // Use the fallback instead
+                impactDirection = new Vector3(localFallback.x, 0, localFallback.z).normalized;
+            }
+
+            // Determine the primary axis for horizontal directions
+            float angleX = Mathf.Abs(impactDirection.x);
+            float angleZ = Mathf.Abs(impactDirection.z);
+
+            if (angleX > angleZ)
+            {
+                return (impactDirection.x > 0) ? 1 : 3; // East or West
+            }
+            else
+            {
+                return (impactDirection.z > 0) ? 0 : 2; // North or South
+            }
         }
 
         private void OnDestroy()
