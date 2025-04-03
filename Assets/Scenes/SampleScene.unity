@@ -783,11 +783,11 @@ MonoBehaviour:
   Pivot: {x: 0, y: 0, z: 0}
   CustomBlocks:
   - VoxelValue: 5
-    AllowOrientation: 0
+    AllowOrientation: 1
     HasTransparency: 0
     Mesh: {fileID: -122999701322966394, guid: 7e40043dc4958bd43b2a927c5890facc, type: 3}
   - VoxelValue: 6
-    AllowOrientation: 0
+    AllowOrientation: 1
     HasTransparency: 1
     Mesh: {fileID: -9146618070568788744, guid: 34af2fddd39e92e4fb0ccc03cfa31e9a, type: 3}
   IsInfinite: 1
