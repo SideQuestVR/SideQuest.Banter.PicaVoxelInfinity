@@ -315,7 +315,7 @@ namespace PicaVoxel
                 EventBus.Trigger("OnVoxelManipulatorValueChanged", (int)VoxelValue);
                 return;
             }
-            SetVoxelValue(VoxelValue++);
+            SetVoxelValue(VoxelValue+1);
         }
         public void DecrementValue()
         {
@@ -332,13 +332,13 @@ namespace PicaVoxel
                 EventBus.Trigger("OnVoxelManipulatorValueChanged", (int)VoxelValue);
                 return;
             }
-            SetVoxelValue(VoxelValue--);
+            SetVoxelValue(VoxelValue-1);
         }
         
         public void SetVoxelValue(int val)
         {
             if(!IsActive) SetActive(true);
-            VoxelValue = (byte)(VoxelValue % (MaxValue+1));
+            VoxelValue = (byte)(val % (MaxValue+1));
             OnValueChanged?.Invoke(VoxelValue);
             EventBus.Trigger("OnVoxelManipulatorValueChanged", (int)VoxelValue);
         }
