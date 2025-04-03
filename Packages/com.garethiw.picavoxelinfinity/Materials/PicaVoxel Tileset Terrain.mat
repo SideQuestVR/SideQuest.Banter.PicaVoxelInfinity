@@ -80,8 +80,8 @@ Material:
     - _BumpScale: 1
     - _Cutoff: 0
     - _DetailNormalMapScale: 1
-    - _DistanceFalloff: 10
-    - _DrawDistance: 128.46
+    - _DistanceFalloff: 5
+    - _DrawDistance: 140
     - _DstBlend: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
