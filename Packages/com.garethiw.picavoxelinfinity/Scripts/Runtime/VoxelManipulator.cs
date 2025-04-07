@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
@@ -28,6 +29,12 @@ namespace PicaVoxel
 
         public GameObject CursorPrefab;
         public bool UseLineRenderer = false;
+
+        public Mesh CubePreviewMesh;
+        [HideInInspector]
+        public Mesh PreviewMesh;
+        [HideInInspector]
+        public bool IsPreviewCustomMesh;
         
         public InputAction AddAction;
         public InputAction RemoveAction;
@@ -143,6 +150,17 @@ namespace PicaVoxel
             
             _selectedVolume = VolumeRaycast(ray, _lastAction==0?-(0.001f*_lastVoxelSize):(0.001f*_lastVoxelSize), out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
             
+            if (_selectedVolume.CustomBlocksDict.TryGetValue(VoxelValue, out CustomBlockData data))
+            {
+                PreviewMesh = _selectedVolume.CustomBlocks.FirstOrDefault(b=>b.VoxelValue==VoxelValue)?.Mesh;
+                IsPreviewCustomMesh = true;
+            }
+            else
+            {
+                PreviewMesh = CubePreviewMesh;
+                IsPreviewCustomMesh = false;
+            }
+            
             if (UseLineRenderer && _lineRenderer && hitPos.HasValue)
             {
                 _lastLRPos = hitPos.Value;
@@ -157,13 +175,10 @@ namespace PicaVoxel
                 return;
             }
             
-            Debug.DrawLine(ray.origin, hitPos.Value, Color.magenta, 0.5f);
-            
             _lastVoxelSize = _selectedVolume.VoxelSize;
-
-            _orientation = GetHitOrientation(_hitInfo, _selectedChunk.transform, ray.direction);
-            Debug.Log($"Orientation: {_orientation}");
             
+            _orientation = GetHitOrientation(_hitInfo, _selectedChunk.transform, ray.direction);
+
             _cursor.transform.localScale = new Vector3(1.01f,1.01f,1.01f) * _selectedVolume.VoxelSize;
             _cursor.transform.rotation = _selectedVolume.transform.rotation;
             _cursor.transform.position = _selectedChunk.transform.TransformPoint(new Vector3(_selectedVoxel.x, _selectedVoxel.y, _selectedVoxel.z)*_selectedVolume.VoxelSize + (Vector3.one * (_selectedVolume.VoxelSize * 0.5f)));
