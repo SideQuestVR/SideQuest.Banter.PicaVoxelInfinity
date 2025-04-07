@@ -300,7 +300,6 @@ namespace PicaVoxel
         public void SetActive(bool active)
         {
             IsActive = active;
-            SetPreviewMesh();
             OnActiveChanged?.Invoke(active);
             EventBus.Trigger("OnVoxelManipulatorActiveChanged", active);
         }
@@ -316,6 +315,7 @@ namespace PicaVoxel
             {
                 SetActive(false);
                 VoxelValue=(byte)0;
+                SetPreviewMesh();
                 OnValueChanged?.Invoke(VoxelValue);
                 EventBus.Trigger("OnVoxelManipulatorValueChanged", (int)VoxelValue);
                 return;
@@ -333,6 +333,7 @@ namespace PicaVoxel
             {
                 SetActive(false);
                 VoxelValue=(byte)MaxValue;
+                SetPreviewMesh();
                 OnValueChanged?.Invoke(VoxelValue);
                 EventBus.Trigger("OnVoxelManipulatorValueChanged", (int)VoxelValue);
                 return;
