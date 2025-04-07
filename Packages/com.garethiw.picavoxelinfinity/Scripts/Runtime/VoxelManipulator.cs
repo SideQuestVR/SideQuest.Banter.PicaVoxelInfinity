@@ -383,6 +383,9 @@ namespace PicaVoxel
 
         private void SetPreviewMesh()
         {
+            if (!_selectedVolume)
+                return;
+            
             if (_selectedVolume.CustomBlocksDict.TryGetValue(VoxelValue, out CustomBlockData data))
             {
                 PreviewMesh = _selectedVolume.CustomBlocks.FirstOrDefault(b=>b.VoxelValue==VoxelValue)?.Mesh;
