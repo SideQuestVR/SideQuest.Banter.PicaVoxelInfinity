@@ -564,6 +564,9 @@ MonoBehaviour:
   VoxelColor: {r: 1, g: 1, b: 1, a: 1}
   CursorPrefab: {fileID: 823897801914889954, guid: 9e54829b76f3712418a4e924ab987740, type: 3}
   UseLineRenderer: 1
+  CubePreviewMesh: {fileID: 0}
+  PreviewMesh: {fileID: 0}
+  IsPreviewCustomMesh: 0
   AddAction:
     m_Name: Perform
     m_Type: 0
