@@ -17,6 +17,7 @@ namespace PicaVoxel
         }
         
         public bool IsActive;
+        public ManipulatorMode Mode;
         
         public Vector2 RayDistanceMinMax;
         public LayerMask LayerMask;
@@ -27,14 +28,18 @@ namespace PicaVoxel
         public byte VoxelValue = 0;
         public Color VoxelColor = Color.white;
 
+        public Color[] ColorPalette;
+        
         public GameObject CursorPrefab;
         public bool UseLineRenderer = false;
 
         public Mesh CubePreviewMesh;
-        //[HideInInspector]
+        [HideInInspector]
         public Mesh PreviewMesh;
         [HideInInspector]
         public bool IsPreviewCustomMesh;
+        public Material ValuePreviewMaterial;
+        public Material ColorPreviewMaterial;
         
         public InputAction AddAction;
         public InputAction RemoveAction;
@@ -57,6 +62,7 @@ namespace PicaVoxel
         private Vector3 _lastLRPos;
         private float _lastVoxelSize = 1f;
         private int _orientation;
+        private Volume _previousVolume;
         
         private void Start()
         {
@@ -162,6 +168,18 @@ namespace PicaVoxel
                 if (UseLineRenderer && _lineRenderer)
                     _lineRenderer.enabled = false;
                 return;
+            }
+
+            if (_selectedVolume != _previousVolume)
+            {
+                Mode = _selectedVolume.ManipulatorMode;
+                ColorPalette = _selectedVolume.ColorPalette;
+                MaxValue = _selectedVolume.MaxValue;
+                if (Mode == ManipulatorMode.Color)
+                    MaxValue = ColorPalette.GetUpperBound(0);
+                if (VoxelValue > MaxValue)
+                    SetVoxelValue(_selectedVolume.MaxValue);
+                _previousVolume = _selectedVolume;
             }
 
             if (!PreviewMesh)
@@ -322,6 +340,8 @@ namespace PicaVoxel
             {
                 SetActive(false);
                 VoxelValue=(byte)0;
+                if (Mode == ManipulatorMode.Color)
+                    VoxelColor = ColorPalette[(int)VoxelValue];
                 SetPreviewMesh();
                 OnValueChanged?.Invoke(VoxelValue);
                 EventBus.Trigger("OnVoxelManipulatorValueChanged", (int)VoxelValue);
@@ -340,6 +360,8 @@ namespace PicaVoxel
             {
                 SetActive(false);
                 VoxelValue=(byte)MaxValue;
+                if (Mode == ManipulatorMode.Color)
+                    VoxelColor = ColorPalette[(int)VoxelValue];
                 SetPreviewMesh();
                 OnValueChanged?.Invoke(VoxelValue);
                 EventBus.Trigger("OnVoxelManipulatorValueChanged", (int)VoxelValue);
@@ -352,6 +374,8 @@ namespace PicaVoxel
         {
             if(!IsActive) SetActive(true);
             VoxelValue = (byte)(val % (MaxValue+1));
+            if (Mode == ManipulatorMode.Color)
+                VoxelColor = ColorPalette[(int)VoxelValue];
             SetPreviewMesh();
             OnValueChanged?.Invoke(VoxelValue);
             EventBus.Trigger("OnVoxelManipulatorValueChanged", (int)VoxelValue);

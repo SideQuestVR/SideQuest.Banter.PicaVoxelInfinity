@@ -88,9 +88,13 @@ namespace PicaVoxel
         
         public Dictionary<(int,int,int), Chunk> Chunks = new();
 
+        public int MaxValue;
         public CustomBlock[] CustomBlocks = Array.Empty<CustomBlock>();
         [DoNotSerialize]
         public Dictionary<int, CustomBlockData> CustomBlocksDict = new();
+        public Color[] ColorPalette;
+        
+        public VoxelManipulator.ManipulatorMode ManipulatorMode = VoxelManipulator.ManipulatorMode.Color;
         
         // Infinite mode will be for infinite terrain, which will keep generating as you move
         // Non-infinite will only add chunks when edited, and all chunks will be visible/rendered at startup
