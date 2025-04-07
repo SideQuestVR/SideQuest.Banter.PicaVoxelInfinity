@@ -150,17 +150,6 @@ namespace PicaVoxel
             
             _selectedVolume = VolumeRaycast(ray, _lastAction==0?-(0.001f*_lastVoxelSize):(0.001f*_lastVoxelSize), out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
             
-            if (_selectedVolume.CustomBlocksDict.TryGetValue(VoxelValue, out CustomBlockData data))
-            {
-                PreviewMesh = _selectedVolume.CustomBlocks.FirstOrDefault(b=>b.VoxelValue==VoxelValue)?.Mesh;
-                IsPreviewCustomMesh = true;
-            }
-            else
-            {
-                PreviewMesh = CubePreviewMesh;
-                IsPreviewCustomMesh = false;
-            }
-            
             if (UseLineRenderer && _lineRenderer && hitPos.HasValue)
             {
                 _lastLRPos = hitPos.Value;
@@ -311,6 +300,7 @@ namespace PicaVoxel
         public void SetActive(bool active)
         {
             IsActive = active;
+            SetPreviewMesh();
             OnActiveChanged?.Invoke(active);
             EventBus.Trigger("OnVoxelManipulatorActiveChanged", active);
         }
@@ -354,6 +344,7 @@ namespace PicaVoxel
         {
             if(!IsActive) SetActive(true);
             VoxelValue = (byte)(val % (MaxValue+1));
+            SetPreviewMesh();
             OnValueChanged?.Invoke(VoxelValue);
             EventBus.Trigger("OnVoxelManipulatorValueChanged", (int)VoxelValue);
         }
@@ -387,6 +378,20 @@ namespace PicaVoxel
             else
             {
                 return (impactDirection.z > 0) ? 0 : 2; // North or South
+            }
+        }
+
+        private void SetPreviewMesh()
+        {
+            if (_selectedVolume.CustomBlocksDict.TryGetValue(VoxelValue, out CustomBlockData data))
+            {
+                PreviewMesh = _selectedVolume.CustomBlocks.FirstOrDefault(b=>b.VoxelValue==VoxelValue)?.Mesh;
+                IsPreviewCustomMesh = true;
+            }
+            else
+            {
+                PreviewMesh = CubePreviewMesh;
+                IsPreviewCustomMesh = false;
             }
         }
 
