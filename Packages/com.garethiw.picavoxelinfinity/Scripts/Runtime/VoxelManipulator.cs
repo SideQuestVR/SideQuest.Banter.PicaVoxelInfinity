@@ -31,7 +31,7 @@ namespace PicaVoxel
         public bool UseLineRenderer = false;
 
         public Mesh CubePreviewMesh;
-        [HideInInspector]
+        //[HideInInspector]
         public Mesh PreviewMesh;
         [HideInInspector]
         public bool IsPreviewCustomMesh;
@@ -163,7 +163,14 @@ namespace PicaVoxel
                     _lineRenderer.enabled = false;
                 return;
             }
-            
+
+            if (!PreviewMesh)
+            {
+                SetPreviewMesh();
+                OnValueChanged?.Invoke(VoxelValue);
+                EventBus.Trigger("OnVoxelManipulatorValueChanged", (int)VoxelValue);
+            }
+
             _lastVoxelSize = _selectedVolume.VoxelSize;
             
             _orientation = GetHitOrientation(_hitInfo, _selectedChunk.transform, ray.direction);
