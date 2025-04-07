@@ -177,6 +177,8 @@ namespace PicaVoxel
                 MaxValue = _selectedVolume.MaxValue;
                 if (Mode == ManipulatorMode.Color)
                     MaxValue = ColorPalette.GetUpperBound(0);
+                else
+                    VoxelColor = Color.white;
                 if (VoxelValue > MaxValue) 
                     VoxelValue = (byte)MaxValue;
                 SetVoxelValue(VoxelValue);
