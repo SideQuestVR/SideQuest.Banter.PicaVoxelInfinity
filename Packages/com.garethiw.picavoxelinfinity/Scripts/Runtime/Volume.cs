@@ -47,6 +47,8 @@ namespace PicaVoxel
         public int VoxelValue;
         public bool AllowOrientation;
         public bool HasTransparency;
+        public bool UseTargetOrientationWhenSameValue;
+        public bool UseBoxColliderForCursor;
         public Mesh Mesh;
     }
 
@@ -58,6 +60,8 @@ namespace PicaVoxel
         public int[] Indices;
         public bool HasTransparency;
         public bool AllowOrientation;
+        public bool UseTargetOrientationWhenSameValue;
+        public bool UseBoxColliderForCursor;
     }
     
 #if UNITY_EDITOR
@@ -190,6 +194,8 @@ namespace PicaVoxel
                         data.Indices[i] = cb.Mesh.triangles[i];
                     data.HasMesh = true;
                     data.AllowOrientation = cb.AllowOrientation;
+                    data.UseTargetOrientationWhenSameValue = cb.UseTargetOrientationWhenSameValue;
+                    data.UseBoxColliderForCursor = cb.UseBoxColliderForCursor;
                 }
                 data.HasTransparency = cb.HasTransparency;
                 CustomBlocksDict.Add(cb.VoxelValue, data);
