@@ -334,7 +334,7 @@ namespace PicaVoxel
                         {
                             _cursorCollider.transform.localScale = Vector3.one * vol.VoxelSize;
                             _cursorCollider.transform.rotation = vol.transform.rotation;
-                            _cursorCollider.transform.position = chunk.transform.TransformPoint(new Vector3(voxelPos.x, voxelPos.y, voxelPos.z)*_selectedVolume.VoxelSize + (Vector3.one * (vol.VoxelSize * 0.5f)));
+                            _cursorCollider.transform.position = chunk.transform.TransformPoint(new Vector3(voxelPos.x, voxelPos.y, voxelPos.z)*vol.VoxelSize + (Vector3.one * (vol.VoxelSize * 0.5f)));
                             _cursorCollider.SetActive(true);
                             bool hitcursor = Physics.Raycast(ray.origin, ray.direction, out _hitInfo, RayDistanceMinMax.y);
                             if (hitcursor && _hitInfo.collider.gameObject==_cursorCollider)
