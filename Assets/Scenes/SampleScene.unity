@@ -794,7 +794,7 @@ MonoBehaviour:
   ChunkSize: 16
   VoxelSize: 1
   Pivot: {x: 0, y: 0, z: 0}
-  MaxValue: 0
+  MaxValue: 7
   CustomBlocks:
   - VoxelValue: 5
     AllowOrientation: 1
