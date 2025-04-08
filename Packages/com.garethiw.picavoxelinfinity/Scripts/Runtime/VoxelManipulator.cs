@@ -31,6 +31,7 @@ namespace PicaVoxel
         public Color[] ColorPalette;
         
         public GameObject CursorPrefab;
+        public GameObject CursorColliderPrefab;
         public bool UseLineRenderer = false;
 
         public Mesh CubePreviewMesh;
@@ -56,6 +57,7 @@ namespace PicaVoxel
         private Chunk _selectedChunk;
         private (int x, int y, int z) _selectedVoxel;
         private GameObject _cursor;
+        private GameObject _cursorCollider;
         private float _cursorUpdate = 0f;
         private LineRenderer _lineRenderer;
         private Vector3 _lastLRPos;
@@ -84,6 +86,8 @@ namespace PicaVoxel
             
             _cursor = Instantiate(CursorPrefab);
             _cursor.SetActive(false);
+            _cursorCollider = Instantiate(CursorColliderPrefab);
+            _cursorCollider.SetActive(false);
         }
 
         private void OnActiveAction(InputAction.CallbackContext obj)
@@ -154,6 +158,8 @@ namespace PicaVoxel
             _cursorUpdate = 0f;
             
             _selectedVolume = VolumeRaycast(ray, 0.001f*_lastVoxelSize, out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
+            if(hitPos.HasValue)
+                Debug.DrawLine(ray.origin, hitPos.Value, Color.red);
             
             if (UseLineRenderer && _lineRenderer && hitPos.HasValue)
             {
@@ -207,14 +213,15 @@ namespace PicaVoxel
                 return false;
             
             Ray ray = new Ray(transform.position, transform.forward);
-            Debug.DrawRay(ray.origin, ray.direction * RayDistanceMinMax.y, Color.magenta, 0.5f);
-            Volume vol = VolumeRaycast(ray);
+            
+            Volume vol = VolumeRaycast(ray, 0f, out Chunk _, out (int x, int y, int z) _, out Vector3? _);
             if (!vol) return false;
 
             if ((_hitInfo.point - transform.position).magnitude < (RayDistanceMinMax.x*_lastVoxelSize))
                 return false;
-            
-            if (vol.GetVoxelAtWorldPosition(_hitInfo.point + (ray.direction * (0.1f*_lastVoxelSize)), out Chunk _, out (int x, int y, int z) _) == null)
+
+            Voxel? tv = vol.GetVoxelAtWorldPosition(_hitInfo.point + (ray.direction * (0.1f * _lastVoxelSize)), out Chunk _, out (int x, int y, int z) _);
+            if (!tv.HasValue)
                 return false;
 
             // Custom blocks have state > 1, 2-5 is block orientation north,east,south,west
@@ -222,8 +229,14 @@ namespace PicaVoxel
             if (_selectedVolume.CustomBlocksDict.TryGetValue(VoxelValue, out CustomBlockData data))
             {
                 state = 2;
-                if(data.AllowOrientation)
+                if (data.AllowOrientation)
+                {
                     state += (byte)GetHitOrientation(_hitInfo, _selectedChunk.transform, ray.direction);
+                    if (data.UseTargetOrientationWhenSameValue && tv.Value.Value==VoxelValue)
+                    {
+                        state = tv.Value.State;
+                    }
+                }
             }
             
             Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point - (ray.direction * (0.1f*_lastVoxelSize)), new Voxel(){State = state, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
@@ -311,7 +324,29 @@ namespace PicaVoxel
                 if (vol == null)
                     return vol;
 
-                vol.GetVoxelAtWorldPosition(_hitInfo.point+ (ray.direction *offset), out chunk, out voxelPos);
+                Voxel? v =vol.GetVoxelAtWorldPosition(_hitInfo.point+ (ray.direction *offset), out chunk, out voxelPos);
+
+                if (v.HasValue)
+                {
+                    if (vol.CustomBlocksDict.TryGetValue(v.Value.Value, out CustomBlockData data))
+                    {
+                        if (data.UseBoxColliderForCursor)
+                        {
+                            _cursorCollider.transform.localScale = Vector3.one * vol.VoxelSize;
+                            _cursorCollider.transform.rotation = vol.transform.rotation;
+                            _cursorCollider.transform.position = chunk.transform.TransformPoint(new Vector3(voxelPos.x, voxelPos.y, voxelPos.z)*_selectedVolume.VoxelSize + (Vector3.one * (vol.VoxelSize * 0.5f)));
+                            _cursorCollider.SetActive(true);
+                            bool hitcursor = Physics.Raycast(ray.origin, ray.direction, out _hitInfo, RayDistanceMinMax.y);
+                            if (hitcursor && _hitInfo.collider.gameObject==_cursorCollider)
+                            {
+                                hitPos = _hitInfo.point;
+                                v =vol.GetVoxelAtWorldPosition(_hitInfo.point+ (ray.direction *offset), out chunk, out voxelPos);
+                            }
+                            _cursorCollider.SetActive(false);
+                        }
+                    }
+                }
+                
                 return vol;
             }
             

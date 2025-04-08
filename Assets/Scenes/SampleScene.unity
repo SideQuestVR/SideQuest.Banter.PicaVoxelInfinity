@@ -571,6 +571,7 @@ MonoBehaviour:
   VoxelColor: {r: 1, g: 1, b: 1, a: 1}
   ColorPalette: []
   CursorPrefab: {fileID: 823897801914889954, guid: 9e54829b76f3712418a4e924ab987740, type: 3}
+  CursorColliderPrefab: {fileID: 823897801914889954, guid: 7683096515a3a6945805b398005d688c, type: 3}
   UseLineRenderer: 1
   CubePreviewMesh: {fileID: 0}
   PreviewMesh: {fileID: 0}
@@ -806,7 +807,7 @@ MonoBehaviour:
     AllowOrientation: 1
     HasTransparency: 1
     UseTargetOrientationWhenSameValue: 0
-    UseBoxColliderForCursor: 0
+    UseBoxColliderForCursor: 1
     Mesh: {fileID: -9146618070568788744, guid: 34af2fddd39e92e4fb0ccc03cfa31e9a, type: 3}
   ColorPalette: []
   ManipulatorMode: 1
@@ -897,7 +898,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &2142809288
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -929,7 +930,12 @@ MonoBehaviour:
   Pivot: {x: 0, y: 0, z: 0}
   MaxValue: 0
   CustomBlocks: []
-  ColorPalette: []
+  ColorPalette:
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
   ManipulatorMode: 1
   IsInfinite: 0
   InfiniteChunkRadius: 0
