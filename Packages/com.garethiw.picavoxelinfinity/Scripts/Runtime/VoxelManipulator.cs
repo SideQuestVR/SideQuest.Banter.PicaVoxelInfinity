@@ -57,7 +57,6 @@ namespace PicaVoxel
         private (int x, int y, int z) _selectedVoxel;
         private GameObject _cursor;
         private float _cursorUpdate = 0f;
-        private int _lastAction = 0;
         private LineRenderer _lineRenderer;
         private Vector3 _lastLRPos;
         private float _lastVoxelSize = 1f;
@@ -154,7 +153,7 @@ namespace PicaVoxel
                 return;
             _cursorUpdate = 0f;
             
-            _selectedVolume = VolumeRaycast(ray, _lastAction==0?-(0.001f*_lastVoxelSize):(0.001f*_lastVoxelSize), out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
+            _selectedVolume = VolumeRaycast(ray, 0.001f*_lastVoxelSize, out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
             
             if (UseLineRenderer && _lineRenderer && hitPos.HasValue)
             {
@@ -229,8 +228,6 @@ namespace PicaVoxel
             
             Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point - (ray.direction * (0.1f*_lastVoxelSize)), new Voxel(){State = state, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
 
-            _lastAction = 0;
-
             Debug.Log("Manipulator AddVoxel");
             if (v != null)
             {
@@ -264,9 +261,7 @@ namespace PicaVoxel
             Volume vol = VolumeRaycast(ray);
             if (!vol) return false;
 
-            Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point + (ray.direction *(0.1f*_lastVoxelSize)), new Voxel(){State = 0}, out Chunk chunk, out (int x, int y, int z) pos);
-
-            _lastAction = 1;
+            Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point + (ray.direction *(0.1f*_lastVoxelSize)), new Voxel(){State = 0}, out Chunk chunk, out (int x, int y, int z) pos); ;
             
             Debug.Log("Manipulator RemoveVoxel");
             if (v != null)
@@ -420,16 +415,17 @@ namespace PicaVoxel
         {
             if (!_selectedVolume)
                 return;
-            
+
+            PreviewMesh = CubePreviewMesh;
+            IsPreviewCustomMesh = false;
+
             if (_selectedVolume.CustomBlocksDict.TryGetValue(VoxelValue, out CustomBlockData data))
             {
-                PreviewMesh = _selectedVolume.CustomBlocks.FirstOrDefault(b=>b.VoxelValue==VoxelValue)?.Mesh;
-                IsPreviewCustomMesh = true;
-            }
-            else
-            {
-                PreviewMesh = CubePreviewMesh;
-                IsPreviewCustomMesh = false;
+                IsPreviewCustomMesh = data.HasMesh;
+                if (data.HasMesh)
+                {
+                    PreviewMesh = _selectedVolume.CustomBlocks.FirstOrDefault(b => b.VoxelValue == VoxelValue)?.Mesh;
+                }
             }
         }
 

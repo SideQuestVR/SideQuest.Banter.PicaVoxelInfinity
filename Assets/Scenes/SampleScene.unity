@@ -169,7 +169,10 @@ MonoBehaviour:
   ChunkSize: 16
   VoxelSize: 0.1
   Pivot: {x: 0, y: 0, z: 0}
+  MaxValue: 0
   CustomBlocks: []
+  ColorPalette: []
+  ManipulatorMode: 1
   IsInfinite: 0
   InfiniteChunkRadius: 0
   InfiniteChunkBounds: {x: 0, y: 0, z: 0}
@@ -244,7 +247,10 @@ MonoBehaviour:
   ChunkSize: 16
   VoxelSize: 0.1
   Pivot: {x: 0, y: 0, z: 0}
+  MaxValue: 0
   CustomBlocks: []
+  ColorPalette: []
+  ManipulatorMode: 1
   IsInfinite: 0
   InfiniteChunkRadius: 0
   InfiniteChunkBounds: {x: 0, y: 0, z: 0}
@@ -554,19 +560,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   IsActive: 1
+  Mode: 0
   RayDistanceMinMax: {x: 1.75, y: 50}
   LayerMask:
     serializedVersion: 2
     m_Bits: 1
-  MaxValue: 6
+  MaxValue: 7
   IncludeInactiveInValueRange: 1
   VoxelValue: 6
   VoxelColor: {r: 1, g: 1, b: 1, a: 1}
+  ColorPalette: []
   CursorPrefab: {fileID: 823897801914889954, guid: 9e54829b76f3712418a4e924ab987740, type: 3}
   UseLineRenderer: 1
   CubePreviewMesh: {fileID: 0}
   PreviewMesh: {fileID: 0}
   IsPreviewCustomMesh: 0
+  ValuePreviewMaterial: {fileID: 0}
+  ColorPreviewMaterial: {fileID: 0}
   AddAction:
     m_Name: Perform
     m_Type: 0
@@ -784,15 +794,22 @@ MonoBehaviour:
   ChunkSize: 16
   VoxelSize: 1
   Pivot: {x: 0, y: 0, z: 0}
+  MaxValue: 0
   CustomBlocks:
   - VoxelValue: 5
     AllowOrientation: 1
     HasTransparency: 0
+    UseTargetOrientationWhenSameValue: 0
+    UseBoxColliderForCursor: 0
     Mesh: {fileID: -122999701322966394, guid: 7e40043dc4958bd43b2a927c5890facc, type: 3}
   - VoxelValue: 6
     AllowOrientation: 1
     HasTransparency: 1
+    UseTargetOrientationWhenSameValue: 0
+    UseBoxColliderForCursor: 0
     Mesh: {fileID: -9146618070568788744, guid: 34af2fddd39e92e4fb0ccc03cfa31e9a, type: 3}
+  ColorPalette: []
+  ManipulatorMode: 1
   IsInfinite: 1
   InfiniteChunkRadius: 12
   InfiniteChunkBounds: {x: 0, y: 2, z: 0}
@@ -910,7 +927,10 @@ MonoBehaviour:
   ChunkSize: 16
   VoxelSize: 0.1
   Pivot: {x: 0, y: 0, z: 0}
+  MaxValue: 0
   CustomBlocks: []
+  ColorPalette: []
+  ManipulatorMode: 1
   IsInfinite: 0
   InfiniteChunkRadius: 0
   InfiniteChunkBounds: {x: 0, y: 0, z: 0}
