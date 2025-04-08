@@ -228,7 +228,6 @@ namespace PicaVoxel
             
             Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point - (ray.direction * (0.1f*_lastVoxelSize)), new Voxel(){State = state, Value = VoxelValue, Color=VoxelColor}, out Chunk chunk, out (int x, int y, int z) pos);
 
-            Debug.Log("Manipulator AddVoxel");
             if (v != null)
             {
                 VoxelEditEventArgs args = 
@@ -263,7 +262,6 @@ namespace PicaVoxel
 
             Voxel? v = vol.SetVoxelAtWorldPosition(_hitInfo.point + (ray.direction *(0.1f*_lastVoxelSize)), new Voxel(){State = 0}, out Chunk chunk, out (int x, int y, int z) pos); ;
             
-            Debug.Log("Manipulator RemoveVoxel");
             if (v != null)
             {
                 VoxelEditEventArgs args = 

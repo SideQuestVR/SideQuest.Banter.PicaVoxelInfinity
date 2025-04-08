@@ -367,7 +367,7 @@ namespace PicaVoxel
         {
             Voxel v = invoxels[(x + xOffset) + (ub0 + 1)*((y + yOffset) + (ub1 + 1)*(z + zOffset))];
 
-            voxelFace.Active = v.State==1;
+            voxelFace.Active = v.State>0;
             voxelFace.Value = v.Value;
             voxelFace.Color = ColorToInt(v.Color);
             voxelFace.VertShade = 0;
