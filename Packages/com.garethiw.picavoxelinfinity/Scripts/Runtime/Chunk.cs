@@ -145,11 +145,11 @@ namespace PicaVoxel
                         
                         // Only re-mesh neighbouring chunk if edited voxel was along the adjacent edge
                         if((xx==0 && pos.x==0) ||
-                           (xx==1 && pos.x==Volume.ChunkSize-1) ||
+                           (xx==2 && pos.x==Volume.ChunkSize-1) ||
                            (zz==0 && pos.z==0) ||
-                           (zz==1 && pos.z==Volume.ChunkSize-1) ||
+                           (zz==2 && pos.z==Volume.ChunkSize-1) ||
                            (yy==0 && pos.y==0) ||
-                           (yy==1 && pos.y==Volume.ChunkSize-1))
+                           (yy==2 && pos.y==Volume.ChunkSize-1))
                             Volume.GetChunk((Position.x + (xx - 1), Position.y + (yy - 1), Position.z + (zz - 1)))?.SetMeshDirty();
                     }
 
