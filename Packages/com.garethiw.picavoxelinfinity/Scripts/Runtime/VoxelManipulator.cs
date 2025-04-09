@@ -47,6 +47,7 @@ namespace PicaVoxel
         public InputAction IncrementValueAction;
         public InputAction DecrementValueAction;
         public InputAction ToggleActiveAction;
+        public InputAction DeactivateAction;
 
         public UnityEvent<VoxelEditEventArgs> OnManipulatorEdit;
         public UnityEvent<int> OnValueChanged;
@@ -77,6 +78,8 @@ namespace PicaVoxel
             DecrementValueAction.performed += OnDecrementValueAction;
             ToggleActiveAction.Enable();
             ToggleActiveAction.performed += OnActiveAction;
+            DeactivateAction.Enable();
+            DeactivateAction.performed += OnDeactivateAction;
 
             if (UseLineRenderer)
             {
@@ -88,6 +91,11 @@ namespace PicaVoxel
             _cursor.SetActive(false);
             _cursorCollider = Instantiate(CursorColliderPrefab);
             _cursorCollider.SetActive(false);
+        }
+
+        private void OnDeactivateAction(InputAction.CallbackContext obj)
+        {
+            SetActive(false);
         }
 
         private void OnActiveAction(InputAction.CallbackContext obj)
