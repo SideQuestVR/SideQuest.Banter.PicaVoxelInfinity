@@ -193,10 +193,6 @@ MonoBehaviour:
   CastShadows: 1
   ReceiveShadows: 1
   ChunkLayer: 0
-  ImportedFrom: 0
-  ImportedFile: 
-  ImportedMode: 0
-  ImportedCutoutColor: {r: 0, g: 0, b: 0, a: 0}
 --- !u!4 &43371194
 Transform:
   m_ObjectHideFlags: 0
@@ -271,10 +267,6 @@ MonoBehaviour:
   CastShadows: 1
   ReceiveShadows: 1
   ChunkLayer: 0
-  ImportedFrom: 0
-  ImportedFile: 
-  ImportedMode: 0
-  ImportedCutoutColor: {r: 0, g: 0, b: 0, a: 0}
 --- !u!4 &570986739
 Transform:
   m_ObjectHideFlags: 0
@@ -806,11 +798,11 @@ MonoBehaviour:
   - VoxelValue: 6
     AllowOrientation: 1
     HasTransparency: 1
-    UseTargetOrientationWhenSameValue: 0
+    UseTargetOrientationWhenSameValue: 1
     UseBoxColliderForCursor: 1
     Mesh: {fileID: -9146618070568788744, guid: 34af2fddd39e92e4fb0ccc03cfa31e9a, type: 3}
   ColorPalette: []
-  ManipulatorMode: 1
+  ManipulatorMode: 0
   IsInfinite: 1
   InfiniteChunkRadius: 12
   InfiniteChunkBounds: {x: 0, y: 2, z: 0}
@@ -831,10 +823,6 @@ MonoBehaviour:
   CastShadows: 1
   ReceiveShadows: 1
   ChunkLayer: 0
-  ImportedFrom: 0
-  ImportedFile: 
-  ImportedMode: 0
-  ImportedCutoutColor: {r: 0, g: 0, b: 0, a: 0}
 --- !u!4 &970619890
 Transform:
   m_ObjectHideFlags: 0
@@ -957,10 +945,6 @@ MonoBehaviour:
   CastShadows: 1
   ReceiveShadows: 1
   ChunkLayer: 0
-  ImportedFrom: 0
-  ImportedFile: 
-  ImportedMode: 0
-  ImportedCutoutColor: {r: 0, g: 0, b: 0, a: 0}
 --- !u!4 &2142809290
 Transform:
   m_ObjectHideFlags: 0

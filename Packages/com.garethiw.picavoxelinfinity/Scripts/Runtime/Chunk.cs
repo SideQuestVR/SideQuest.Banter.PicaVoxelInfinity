@@ -2,24 +2,17 @@
 // 
 // PicaVoxel - The tiny voxel engine for Unity - http://picavoxel.com
 // By Gareth Williams - @garethiw - http://gareth.pw
-// 
-// Source code distributed under standard Asset Store licence:
-// http://unity3d.com/legal/as_terms
 //
 /////////////////////////////////////////////////////////////////////////
 
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using UnityEngine;
-using System.Collections;
 using System.Threading;
-using JetBrains.Annotations;
-using UnityEngine.UI;
 
 namespace PicaVoxel
 {
@@ -300,6 +293,12 @@ namespace PicaVoxel
         private Chunk[] _neighbours = new Chunk[27];
         private void GenerateMeshActual(MeshingMode meshMode)
         {
+            foreach (I_ChunkProcessor p in _volume.ChunkProcessors)
+            {
+                if (p.Schedule == ProcessingSchedule.BeforeMeshing)
+                    p.ProcessChunk(_volume, this);
+            }
+            
             for(int x=0;x<3;x++)
                 for(int y=0;y<3;y++)
                     for(int z=0;z<3;z++)
