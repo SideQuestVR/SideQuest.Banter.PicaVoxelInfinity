@@ -7,7 +7,7 @@ namespace PicaVoxel
     [Serializable, Inspectable]
     public class VoxelEditEventArgs
     {
-        public VoxelEditEventArgs(string volumeId, int chunkX, int chunkY, int chunkZ, int voxelX, int voxelY, int voxelZ, byte voxelState, byte voxelValue, Color voxelColor=new())
+        public VoxelEditEventArgs(string volumeId, int chunkX, int chunkY, int chunkZ, int voxelX, int voxelY, int voxelZ, byte voxelState, byte voxelValue, Vector3 worldPosition, Color voxelColor=new())
         {
             VolumeId = volumeId;
             ChunkX = chunkX;
@@ -19,6 +19,7 @@ namespace PicaVoxel
             VoxelState = voxelState;
             VoxelValue = voxelValue;
             VoxelColor = voxelColor;
+            WorldPosition = worldPosition;
         }
         
         [Inspectable]
@@ -41,5 +42,7 @@ namespace PicaVoxel
         public byte VoxelValue;
         [Inspectable]
         public Color VoxelColor;
+        [Inspectable] 
+        public Vector3 WorldPosition;
     }
 }

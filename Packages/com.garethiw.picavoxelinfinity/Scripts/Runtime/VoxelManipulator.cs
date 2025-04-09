@@ -254,7 +254,8 @@ namespace PicaVoxel
                     voxelZ: pos.z,
                     voxelState: v.Value.State,
                     voxelValue: v.Value.Value,
-                    voxelColor: v.Value.Color
+                    voxelColor: v.Value.Color,
+                    worldPosition: _hitInfo.point
                 );
                 OnManipulatorEdit?.Invoke(args);
                 EventBus.Trigger("OnVoxelManipulatorEdit", args);
@@ -288,7 +289,8 @@ namespace PicaVoxel
                         voxelZ: pos.z,
                         voxelState: v.Value.State,
                         voxelValue: v.Value.Value,
-                        voxelColor: v.Value.Color
+                        voxelColor: v.Value.Color,
+                        worldPosition: _hitInfo.point
                     );
                 OnManipulatorEdit?.Invoke(args);
                 EventBus.Trigger("OnVoxelManipulatorEdit", args);
