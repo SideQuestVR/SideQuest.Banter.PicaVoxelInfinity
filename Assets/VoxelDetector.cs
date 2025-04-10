@@ -10,12 +10,14 @@ public class VoxelDetector : MonoBehaviour
 {
     public float DetectionInterval = 0.1f;
     public bool DetectInactiveVoxels = false;
+    public bool FireOnlyWhenVoxelPositionChanges = false;
     public bool FireOnlyWhenVoxelValueOrStateChanges = true;
     public Volume Volume;
     
     public UnityEvent<VoxelDetectorEventArgs> OnVoxelDetected;
 
     private Voxel _lastVoxelDetected;
+    private (int x, int y, int z) _lastVoxelPosition;
     private float _detectTime;
 
     private void Update()
@@ -38,7 +40,10 @@ public class VoxelDetector : MonoBehaviour
         if (!DetectInactiveVoxels && !v.Value.Active)
             return;
         
-        if(v.Value.Value==_lastVoxelDetected.Value && v.Value.State==_lastVoxelDetected.State)
+        if(FireOnlyWhenVoxelValueOrStateChanges && v.Value.Value==_lastVoxelDetected.Value && v.Value.State==_lastVoxelDetected.State)
+            return;
+
+        if (FireOnlyWhenVoxelPositionChanges && pos == _lastVoxelPosition)
             return;
         
         VoxelDetectorEventArgs vd = new VoxelDetectorEventArgs()
@@ -53,10 +58,12 @@ public class VoxelDetector : MonoBehaviour
             VoxelValue = v.Value.Value,
             VoxelState = v.Value.State,
             VoxelColor = v.Value.Color,
-            WorldPosition = transform.position
+            WorldPosition = transform.position,
+            DetectorName = gameObject.name
         };
         
         _lastVoxelDetected = v.Value;
+        _lastVoxelPosition = pos;
         
         //Debug.Log($"Voxel detected at {transform.position} with value {vd.VoxelValue} and state {vd.VoxelState} at voxel pos {pos}");
         

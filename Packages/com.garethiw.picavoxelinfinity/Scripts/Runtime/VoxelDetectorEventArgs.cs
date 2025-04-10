@@ -33,5 +33,7 @@ namespace PicaVoxel
         public Color VoxelColor;
         [Inspectable] 
         public Vector3 WorldPosition;
+        [Inspectable] 
+        public string DetectorName;
     }
 }
