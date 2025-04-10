@@ -631,6 +631,15 @@ MonoBehaviour:
     m_Interactions: 
     m_SingletonActionBindings: []
     m_Flags: 0
+  DeactivateAction:
+    m_Name: Deactivate
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 3181227c-44bb-494f-b9b1-b698b514dabb
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
   OnManipulatorEdit:
     m_PersistentCalls:
       m_Calls: []
