@@ -810,6 +810,18 @@ MonoBehaviour:
     UseTargetOrientationWhenSameValue: 1
     UseBoxColliderForCursor: 1
     Mesh: {fileID: -9146618070568788744, guid: 34af2fddd39e92e4fb0ccc03cfa31e9a, type: 3}
+  - VoxelValue: 7
+    AllowOrientation: 0
+    HasTransparency: 1
+    UseTargetOrientationWhenSameValue: 0
+    UseBoxColliderForCursor: 0
+    Mesh: {fileID: 0}
+  - VoxelValue: 12
+    AllowOrientation: 0
+    HasTransparency: 1
+    UseTargetOrientationWhenSameValue: 0
+    UseBoxColliderForCursor: 0
+    Mesh: {fileID: 0}
   ColorPalette: []
   ManipulatorMode: 0
   IsInfinite: 1
