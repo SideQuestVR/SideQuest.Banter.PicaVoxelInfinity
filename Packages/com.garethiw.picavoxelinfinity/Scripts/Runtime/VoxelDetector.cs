@@ -67,7 +67,7 @@ namespace PicaVoxel
             //Debug.Log($"Voxel detected at {transform.position} with value {vd.VoxelValue} and state {vd.VoxelState} at voxel pos {pos}");
 
             OnVoxelDetected?.Invoke(vd);
-            EventBus.Trigger("OnVoxelDetected");
+            EventBus.Trigger("OnVoxelDetected", vd);
         }
     }
 }
