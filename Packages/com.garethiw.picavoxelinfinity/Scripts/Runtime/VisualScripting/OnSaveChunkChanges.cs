@@ -4,7 +4,7 @@ using PicaVoxel;
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace PicaVoxel
+namespace PicaVoxel.VisualScripting
 {
     [UnitTitle("On Save Chunk Changes")]
     [UnitShortTitle("On Save Chunk Changes")]
