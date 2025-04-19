@@ -456,18 +456,21 @@ namespace PicaVoxel
 
         private void SetPreviewMesh()
         {
-            if (!_selectedVolume)
+            if (!_selectedVolume && !_previousVolume)
                 return;
 
+            var testVol = _selectedVolume;
+            if (!testVol) testVol = _previousVolume;
+            
             PreviewMesh = CubePreviewMesh;
             IsPreviewCustomMesh = false;
 
-            if (_selectedVolume.CustomBlocksDict.TryGetValue(VoxelValue, out CustomBlockData data))
+            if (testVol.CustomBlocksDict.TryGetValue(VoxelValue, out CustomBlockData data))
             {
                 IsPreviewCustomMesh = data.HasMesh;
                 if (data.HasMesh)
                 {
-                    PreviewMesh = _selectedVolume.CustomBlocks.FirstOrDefault(b => b.VoxelValue == VoxelValue)?.Mesh;
+                    PreviewMesh = testVol.CustomBlocks.FirstOrDefault(b => b.VoxelValue == VoxelValue)?.Mesh;
                 }
             }
         }
