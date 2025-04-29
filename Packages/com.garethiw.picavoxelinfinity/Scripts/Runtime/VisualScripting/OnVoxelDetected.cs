@@ -6,10 +6,10 @@ using Unity.VisualScripting;
 
 namespace PicaVoxel.VisualScripting
 {
-    [UnitTitle("On Save Chunk Changes")]
-    [UnitShortTitle("On Save Chunk Changes")]
+    [UnitTitle("On Voxel Detected")]
+    [UnitShortTitle("On Voxel Detected")]
     [UnitCategory("Events\\PicaVoxel")]
-    public class OnSaveChunkChanges : EventUnit<ChunkChangesEventArgs>
+    public class OnVoxelDetected : EventUnit<VoxelDetectorEventArgs>
     {
         [DoNotSerialize]
         public ValueOutput result;
@@ -18,23 +18,23 @@ namespace PicaVoxel.VisualScripting
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook("OnSaveChunkChanges");
+            return new EventHook("OnVoxelDetected");
         }
 
         protected override void Definition()
         {
             base.Definition();
 
-            result = ValueOutput<ChunkChangesEventArgs>("Changes");
+            result = ValueOutput<VoxelDetectorEventArgs>("VoxelDetectorEventArgs");
         }
 
-        protected override bool ShouldTrigger(Flow flow, ChunkChangesEventArgs data)
+        protected override bool ShouldTrigger(Flow flow, VoxelDetectorEventArgs data)
         {
             return true;
         }
 
         // Setting the value on our port.
-        protected override void AssignArguments(Flow flow, ChunkChangesEventArgs data)
+        protected override void AssignArguments(Flow flow, VoxelDetectorEventArgs data)
         {
             flow.SetValue(result, data);
         }

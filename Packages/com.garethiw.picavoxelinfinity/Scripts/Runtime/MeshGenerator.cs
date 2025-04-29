@@ -334,6 +334,28 @@ namespace PicaVoxel
 
                             if (pass == 1 && !tpCube)
                                 continue;
+
+                            if (tpCube)
+                            {
+                                for (int f = 0; f < 6; f++)
+                                {
+                                    GetVoxelFace(vf, x, y, z, f, ref invoxels, chunk, nbs, voxelSize, xOffset, yOffset, zOffset, xSize, ySize, zSize, ub0, ub1, ub2, selfShadeIntensity);
+                                    if (vf.Active)
+                                    {
+                                        // Draw backface for transparent cubes
+                                        switch (f)
+                                        {
+                                            case 0: Quad(worldOffset + new Vector3(0, 1, 0), worldOffset + new Vector3(1, 1, 0), worldOffset + new Vector3(1, 0, 0), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
+                                            case 1: Quad(worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(1, 1, 1), worldOffset + new Vector3(1, 0, 1), worldOffset + new Vector3(0, 0, 1), f, voxelSize, overlapAmount, vf, false, selfShadeIntensity, vertices, indexes, colors, uvs); break;
+                                            case 2: Quad(worldOffset + new Vector3(1, 1, 0), worldOffset + new Vector3(1, 1, 1), worldOffset + new Vector3(1, 0, 1), worldOffset + new Vector3(1, 0, 0), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
+                                            case 3: Quad(worldOffset + new Vector3(0, 1, 0), worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(0, 0, 1), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, false, selfShadeIntensity, vertices, indexes, colors, uvs); break;
+                                            case 4: Quad(worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(1, 1, 1), worldOffset + new Vector3(1, 1, 0), worldOffset + new Vector3(0, 1, 0), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
+                                            case 5: Quad(worldOffset + new Vector3(0, 0, 1), worldOffset + new Vector3(1, 0, 1), worldOffset + new Vector3(1, 0, 0), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, false, selfShadeIntensity, vertices, indexes, colors, uvs); break;
+                                        }
+                                    }
+                                }
+                            }
+
                             for (int f = 0; f < 6; f++)
                             {
                                 GetVoxelFace(vf, x, y, z, f, ref invoxels, chunk, nbs, voxelSize, xOffset, yOffset, zOffset, xSize, ySize, zSize, ub0, ub1, ub2, selfShadeIntensity);
@@ -348,20 +370,6 @@ namespace PicaVoxel
                                         case 3: Quad(worldOffset + new Vector3(0, 1, 0), worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(0, 0, 1), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
                                         case 4: Quad(worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(1, 1, 1), worldOffset + new Vector3(1, 1, 0), worldOffset + new Vector3(0, 1, 0), f, voxelSize, overlapAmount, vf, false, selfShadeIntensity, vertices, indexes, colors, uvs); break;
                                         case 5: Quad(worldOffset + new Vector3(0, 0, 1), worldOffset + new Vector3(1, 0, 1), worldOffset + new Vector3(1, 0, 0), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
-                                    }
-
-                                    if (tpCube)
-                                    {
-                                        // Draw backface for transparent cubes
-                                        switch (f)
-                                        {
-                                            case 0: Quad(worldOffset + new Vector3(0, 1, 0), worldOffset + new Vector3(1, 1, 0), worldOffset + new Vector3(1, 0, 0), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
-                                            case 1: Quad(worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(1, 1, 1), worldOffset + new Vector3(1, 0, 1), worldOffset + new Vector3(0, 0, 1), f, voxelSize, overlapAmount, vf, false, selfShadeIntensity, vertices, indexes, colors, uvs); break;
-                                            case 2: Quad(worldOffset + new Vector3(1, 1, 0), worldOffset + new Vector3(1, 1, 1), worldOffset + new Vector3(1, 0, 1), worldOffset + new Vector3(1, 0, 0), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
-                                            case 3: Quad(worldOffset + new Vector3(0, 1, 0), worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(0, 0, 1), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, false, selfShadeIntensity, vertices, indexes, colors, uvs); break;
-                                            case 4: Quad(worldOffset + new Vector3(0, 1, 1), worldOffset + new Vector3(1, 1, 1), worldOffset + new Vector3(1, 1, 0), worldOffset + new Vector3(0, 1, 0), f, voxelSize, overlapAmount, vf, true, selfShadeIntensity, vertices, indexes, colors, uvs); break;
-                                            case 5: Quad(worldOffset + new Vector3(0, 0, 1), worldOffset + new Vector3(1, 0, 1), worldOffset + new Vector3(1, 0, 0), worldOffset + new Vector3(0, 0, 0), f, voxelSize, overlapAmount, vf, false, selfShadeIntensity, vertices, indexes, colors, uvs); break;
-                                        }
                                     }
                                 }
                             }

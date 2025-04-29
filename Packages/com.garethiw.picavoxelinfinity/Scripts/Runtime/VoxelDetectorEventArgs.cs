@@ -5,21 +5,10 @@ using UnityEngine;
 namespace PicaVoxel
 {
     [Serializable, Inspectable]
-    public class VoxelEditEventArgs
+    public class VoxelDetectorEventArgs
     {
-        public VoxelEditEventArgs(string volumeId, int chunkX, int chunkY, int chunkZ, int voxelX, int voxelY, int voxelZ, byte voxelState, byte voxelValue, Vector3 worldPosition, Color voxelColor=new())
+        public VoxelDetectorEventArgs()
         {
-            VolumeId = volumeId;
-            ChunkX = chunkX;
-            ChunkY = chunkY;
-            ChunkZ = chunkZ;
-            VoxelX = voxelX;
-            VoxelY = voxelY;
-            VoxelZ = voxelZ;
-            VoxelState = voxelState;
-            VoxelValue = voxelValue;
-            VoxelColor = voxelColor;
-            WorldPosition = worldPosition;
         }
         
         [Inspectable]
@@ -44,5 +33,7 @@ namespace PicaVoxel
         public Color VoxelColor;
         [Inspectable] 
         public Vector3 WorldPosition;
+        [Inspectable] 
+        public string DetectorName;
     }
 }

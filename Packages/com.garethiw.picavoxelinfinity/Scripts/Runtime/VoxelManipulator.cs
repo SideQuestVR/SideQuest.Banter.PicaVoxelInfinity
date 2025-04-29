@@ -47,6 +47,7 @@ namespace PicaVoxel
         public InputAction IncrementValueAction;
         public InputAction DecrementValueAction;
         public InputAction ToggleActiveAction;
+        public InputAction DeactivateAction;
 
         public UnityEvent<VoxelEditEventArgs> OnManipulatorEdit;
         public UnityEvent<int> OnValueChanged;
@@ -77,6 +78,8 @@ namespace PicaVoxel
             DecrementValueAction.performed += OnDecrementValueAction;
             ToggleActiveAction.Enable();
             ToggleActiveAction.performed += OnActiveAction;
+            DeactivateAction.Enable();
+            DeactivateAction.performed += OnDeactivateAction;
 
             if (UseLineRenderer)
             {
@@ -88,6 +91,11 @@ namespace PicaVoxel
             _cursor.SetActive(false);
             _cursorCollider = Instantiate(CursorColliderPrefab);
             _cursorCollider.SetActive(false);
+        }
+
+        private void OnDeactivateAction(InputAction.CallbackContext obj)
+        {
+            SetActive(false);
         }
 
         private void OnActiveAction(InputAction.CallbackContext obj)
@@ -254,7 +262,8 @@ namespace PicaVoxel
                     voxelZ: pos.z,
                     voxelState: v.Value.State,
                     voxelValue: v.Value.Value,
-                    voxelColor: v.Value.Color
+                    voxelColor: v.Value.Color,
+                    worldPosition: _hitInfo.point
                 );
                 OnManipulatorEdit?.Invoke(args);
                 EventBus.Trigger("OnVoxelManipulatorEdit", args);
@@ -288,7 +297,8 @@ namespace PicaVoxel
                         voxelZ: pos.z,
                         voxelState: v.Value.State,
                         voxelValue: v.Value.Value,
-                        voxelColor: v.Value.Color
+                        voxelColor: v.Value.Color,
+                        worldPosition: _hitInfo.point
                     );
                 OnManipulatorEdit?.Invoke(args);
                 EventBus.Trigger("OnVoxelManipulatorEdit", args);
@@ -446,18 +456,21 @@ namespace PicaVoxel
 
         private void SetPreviewMesh()
         {
-            if (!_selectedVolume)
+            if (!_selectedVolume && !_previousVolume)
                 return;
 
+            var testVol = _selectedVolume;
+            if (!testVol) testVol = _previousVolume;
+            
             PreviewMesh = CubePreviewMesh;
             IsPreviewCustomMesh = false;
 
-            if (_selectedVolume.CustomBlocksDict.TryGetValue(VoxelValue, out CustomBlockData data))
+            if (testVol.CustomBlocksDict.TryGetValue(VoxelValue, out CustomBlockData data))
             {
                 IsPreviewCustomMesh = data.HasMesh;
                 if (data.HasMesh)
                 {
-                    PreviewMesh = _selectedVolume.CustomBlocks.FirstOrDefault(b => b.VoxelValue == VoxelValue)?.Mesh;
+                    PreviewMesh = testVol.CustomBlocks.FirstOrDefault(b => b.VoxelValue == VoxelValue)?.Mesh;
                 }
             }
         }

@@ -263,7 +263,6 @@ namespace PicaVoxel
                         {
                             if (!_freeChunks.Contains(chunk))
                                 _freeChunks.Enqueue(chunk);
-                            //chunk.CanBeReused = true;
                         }
                     }
 
@@ -276,12 +275,8 @@ namespace PicaVoxel
 
                 int s = 1;
                 for (int z = thisUpdateccpos.z - InfiniteChunkRadius; z < thisUpdateccpos.z + InfiniteChunkRadius; z++)
-                    for (int y = thisUpdateccpos.y - InfiniteChunkRadius;
-                         y < thisUpdateccpos.y + InfiniteChunkRadius;
-                         y++)
-                        for (int x = thisUpdateccpos.x - InfiniteChunkRadius;
-                             x < thisUpdateccpos.x + InfiniteChunkRadius;
-                             x++)
+                    for (int y = thisUpdateccpos.y - InfiniteChunkRadius; y < thisUpdateccpos.y + InfiniteChunkRadius; y++)
+                        for (int x = thisUpdateccpos.x - InfiniteChunkRadius; x < thisUpdateccpos.x + InfiniteChunkRadius; x++)
                         {
                             if ((InfiniteChunkBounds.x > 0 &&
                                  (x < -InfiniteChunkBounds.x || x > InfiniteChunkBounds.x)) ||
@@ -302,7 +297,7 @@ namespace PicaVoxel
                                     s = 1;
                                 if (s != slice)
                                     continue;
-                                if ((thisUpdateccpos - cpos).sqrMagnitude < (InfiniteChunkRadius - thisUpdateMargin) *
+                                if ((thisUpdateccpos - cpos).sqrMagnitude <= (InfiniteChunkRadius - thisUpdateMargin) *
                                     (InfiniteChunkRadius - thisUpdateMargin))
                                     continue;
                             }
