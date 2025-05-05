@@ -83,7 +83,18 @@ namespace PicaVoxel
                     
                     _ = Task.Run(()=>GetDataAsync(keys)).ContinueWith((Task<byte[]> task) =>
                     {
-                        if (task.IsFaulted || !task.IsCompletedSuccessfully || task.Result.Length == 0)
+                        if (task.IsFaulted || !task.IsCompletedSuccessfully)
+                        {
+                            var retry = keys.Split(',');
+                            foreach (string s in retry)
+                            {
+                                _chunksToFetch.Enqueue(s);
+                            }
+
+                            return;
+                        }
+                        
+                        if (task.Result.Length == 0)
                         {
                             _ready = true;
                             return;
@@ -112,7 +123,7 @@ namespace PicaVoxel
                                         string key = keysplit[n];
                                         string[] parts = key.Split('_');
 
-                                        Debug.Log($"{n}: {key}");
+                                        //Debug.Log($"{n}: {key}");
                                         
                                         n++;
                                         
@@ -129,6 +140,11 @@ namespace PicaVoxel
                         catch (Exception e)
                         {
                             Debug.LogError(e);
+                            var retry = keys.Split(',');
+                            foreach (string s in retry)
+                            {
+                                _chunksToFetch.Enqueue(s);
+                            }
                         }
                         
                         _ready = true;
