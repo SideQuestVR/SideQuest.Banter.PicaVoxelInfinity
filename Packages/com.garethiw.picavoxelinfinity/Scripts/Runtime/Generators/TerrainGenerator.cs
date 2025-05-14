@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using UnityEngine;
 using Random = System.Random;
 
@@ -21,8 +22,18 @@ namespace PicaVoxel
         public int HeightMin = 20;
         public int BedrockHeight = -32;
         /////////////
+
+        /// Trees
+        public int TreeSeed = 1;
+        public float TreeThreshold = 0.9f;
+        public int MinTreeHeight = 8;
+        public int MaxTreeHeight = 12;
+        public int TreeTrunkValue = 3;
+        public int TreeLeavesValue = 8;
+        ///////////// 
         
         private FastNoiseLite _noise;
+        private FastNoiseLite _treeNoise;
 
         public bool GenerateVoxel(int x, int y, int z, ref Voxel voxel)
         {
@@ -38,6 +49,13 @@ namespace PicaVoxel
                 _noise.SetFractalOctaves(4);
                 _noise.SetFractalLacunarity(2.5f);
             }
+            
+            if (_treeNoise == null)
+            {
+                _treeNoise = new FastNoiseLite(seed: TreeSeed);
+                _treeNoise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
+                _treeNoise.SetFrequency(0.5f);
+            }
 
             voxel.Color = Color.white;
             float val = _noise.GetNoise(x, z);
@@ -46,9 +64,23 @@ namespace PicaVoxel
             //     Debug.Log(val);
             val *= (HeightMax-HeightMin);
             //Debug.Log(val);
-            voxel.State = (byte)(y < HeightMin + val?1:0);
-            voxel.Value = y<=BedrockHeight? (byte)4: ((y+1) < HeightMin +val) ? (byte)1 : (byte)0;
+            voxel.State = (byte)(y < HeightMin + val?1:voxel.State);
+            voxel.Value = y<=BedrockHeight? (byte)4: ((y+1) < HeightMin +val) ? (byte)1 : voxel.Value;
 
+            if (y >= HeightMin + val)
+            {
+                float tree = +_treeNoise.GetNoise(x, z);
+                tree = (tree + 1) * 0.5f;
+                if (tree < TreeThreshold)
+                    return true;
+
+                if (y < HeightMin + val + MinTreeHeight)
+                {
+                    voxel.State = (byte)1;
+                    voxel.Value = (byte)TreeTrunkValue;
+                }
+            }
+            
             return true;
         }
     }

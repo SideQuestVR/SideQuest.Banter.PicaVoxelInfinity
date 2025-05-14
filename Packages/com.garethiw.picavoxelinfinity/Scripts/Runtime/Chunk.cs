@@ -64,7 +64,7 @@ namespace PicaVoxel
         private bool _disableMrNextFrame= false;
         /////////////////////////////////////////////////////////////////
         
-        public void Initialize((int, int, int) pos, Volume parentVolume)
+        public void Initialize((int, int, int) pos, Volume parentVolume, bool clear=true)
         {
             _volume = parentVolume;
             if (mf is null) mf = GetComponent<MeshFilter>();
@@ -74,7 +74,7 @@ namespace PicaVoxel
             Position = pos;
             transform.localPosition = new Vector3((Position.x*Volume.ChunkSize)-(Volume.ChunkSize*0.5f), (Position.y*Volume.ChunkSize)-(Volume.ChunkSize*0.5f), (Position.z*Volume.ChunkSize)-(Volume.ChunkSize*0.5f)) * Volume.VoxelSize;
             gameObject.layer = Volume.ChunkLayer;
-            if(Voxels==null || Voxels.Length==0)
+            if(Voxels==null || Voxels.Length==0 || clear)
                 Voxels = new Voxel[Volume.ChunkSize * Volume.ChunkSize * Volume.ChunkSize];
             if (mf.sharedMesh is null)
                 mf.sharedMesh = new Mesh();
@@ -103,6 +103,12 @@ namespace PicaVoxel
                         if(!_hasData && Voxels[x + Volume.ChunkSize * (y + Volume.ChunkSize * z)].Active)
                             _hasData = true;
                     }
+            
+            foreach (I_ChunkProcessor p in _volume.ChunkProcessors)
+            {
+                if (p.Schedule == ProcessingSchedule.AfterGeneration)
+                    p.ProcessChunk(_volume, this);
+            }
             //Debug.Log($"Chunk {Position.x},{Position.y},{Position.z} is finished data gen");
 
             _volume.LoadChunkChanges(Position);
