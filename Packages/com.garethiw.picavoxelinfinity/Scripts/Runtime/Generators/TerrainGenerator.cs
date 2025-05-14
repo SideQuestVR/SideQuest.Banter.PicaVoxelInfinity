@@ -24,6 +24,7 @@ namespace PicaVoxel
         /////////////
 
         /// Trees
+        public bool Trees = true;
         public int TreeSeed = 1;
         public float TreeThreshold = 0.9f;
         public int MinTreeHeight = 8;
@@ -67,6 +68,9 @@ namespace PicaVoxel
             voxel.State = (byte)(y < HeightMin + val?1:voxel.State);
             voxel.Value = y<=BedrockHeight? (byte)4: ((y+1) < HeightMin +val) ? (byte)1 : voxel.Value;
 
+            if (!Trees)
+                return true;
+            
             if (y >= HeightMin + val)
             {
                 float tree = +_treeNoise.GetNoise(x, z);
