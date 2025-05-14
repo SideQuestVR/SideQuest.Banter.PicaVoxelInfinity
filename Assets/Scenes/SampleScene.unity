@@ -559,7 +559,7 @@ MonoBehaviour:
     m_Bits: 1
   MaxValue: 7
   IncludeInactiveInValueRange: 1
-  VoxelValue: 6
+  VoxelValue: 12
   VoxelColor: {r: 1, g: 1, b: 1, a: 1}
   ColorPalette: []
   CursorPrefab: {fileID: 823897801914889954, guid: 9e54829b76f3712418a4e924ab987740, type: 3}
@@ -773,6 +773,7 @@ GameObject:
   - component: {fileID: 970619889}
   - component: {fileID: 970619891}
   - component: {fileID: 970619892}
+  - component: {fileID: 970619893}
   m_Layer: 0
   m_Name: Terrain
   m_TagString: Untagged
@@ -874,6 +875,12 @@ MonoBehaviour:
   HeightMax: 10
   HeightMin: 0
   BedrockHeight: -32
+  TreeSeed: 1
+  TreeThreshold: 0.85
+  MinTreeHeight: 8
+  MaxTreeHeight: 12
+  TreeTrunkValue: 3
+  TreeLeavesValue: 8
 --- !u!114 &970619892
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -890,6 +897,22 @@ MonoBehaviour:
   BaseURL: https://screen.sdq.st:2053/v1/chunk/
   BatchGetSize: 250
   BatchGetInterval: 0.5
+--- !u!114 &970619893
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 970619888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95cf5553139f4105afa052929a3f2af2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _schedule: 1
+  _order: 0
+  TreeTrunkValue: 3
+  TreeLeavesValue: 12
 --- !u!1 &1336741799
 GameObject:
   m_ObjectHideFlags: 0
@@ -921,6 +944,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DetectionInterval: 0.1
   DetectInactiveVoxels: 0
+  FireOnlyWhenVoxelPositionChanges: 0
+  FireOnlyWhenVoxelValueOrStateChanges: 1
   Volume: {fileID: 970619889}
   OnVoxelDetected:
     m_PersistentCalls:
