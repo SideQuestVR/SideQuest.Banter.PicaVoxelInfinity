@@ -65,13 +65,16 @@ namespace PicaVoxel
             //     Debug.Log(val);
             val *= (HeightMax-HeightMin);
             //Debug.Log(val);
-            voxel.State = (byte)(y < HeightMin + val?1:voxel.State);
-            voxel.Value = y<=BedrockHeight? (byte)4: ((y+1) < HeightMin +val) ? (byte)1 : voxel.Value;
+            voxel.State = (byte)(y < HeightMin + val?1:0);
+            voxel.Value = y<=BedrockHeight? (byte)4: ((y+1) < HeightMin +val) ? (byte)1 : (byte)0;
 
             if (!Trees)
                 return true;
+
+            int chx = Mathf.Abs(x % 16);
+            int chz = Mathf.Abs(z % 16);
             
-            if (y >= HeightMin + val)
+            if (y >= HeightMin + val && chx>=2 && chx<=13 && chz>=3 && chz<=13) // Should be using chunksize but we don't have volume here :/
             {
                 float tree = +_treeNoise.GetNoise(x, z);
                 tree = (tree + 1) * 0.5f;
