@@ -221,13 +221,6 @@ namespace PicaVoxel
                     _isDataDirty = true;
             }
             
-            if (_disableMrNextFrame)
-            {
-                mr.enabled = false;
-                mc.enabled = false;
-                _disableMrNextFrame= false;
-            }
-            
             if (status == ChunkStatus.NoChange && _isMeshDirty)
             {
                 //Debug.Log($"Chunk {Position.x},{Position.y},{Position.z} has dirty mesh");
@@ -248,6 +241,13 @@ namespace PicaVoxel
                     _isMeshDirty = false;
                     GenerateMesh(false);
                 }
+            }
+            
+            if (_disableMrNextFrame)
+            {
+                mr.enabled = false;
+                mc.enabled = false;
+                _disableMrNextFrame= false;
             }
             
             if (updateColliderNextFrame)
