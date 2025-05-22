@@ -64,7 +64,7 @@ namespace PicaVoxel
         private bool _disableMrNextFrame= false;
         /////////////////////////////////////////////////////////////////
         
-        public void Initialize((int, int, int) pos, Volume parentVolume, bool clear=true)
+        public void Initialize((int, int, int) pos, Volume parentVolume)
         {
             _volume = parentVolume;
             if (mf is null) mf = GetComponent<MeshFilter>();
@@ -74,7 +74,7 @@ namespace PicaVoxel
             Position = pos;
             transform.localPosition = new Vector3((Position.x*Volume.ChunkSize)-(Volume.ChunkSize*0.5f), (Position.y*Volume.ChunkSize)-(Volume.ChunkSize*0.5f), (Position.z*Volume.ChunkSize)-(Volume.ChunkSize*0.5f)) * Volume.VoxelSize;
             gameObject.layer = Volume.ChunkLayer;
-            if(Voxels==null || Voxels.Length==0 || clear)
+            if(Voxels==null || Voxels.Length==0)
                 Voxels = new Voxel[Volume.ChunkSize * Volume.ChunkSize * Volume.ChunkSize];
             if (mf.sharedMesh is null)
                 mf.sharedMesh = new Mesh();
