@@ -195,6 +195,9 @@ namespace PicaVoxel
         
         public void CheckGeneration()
         {
+            if (!_hasData && mr.enabled)
+                mr.enabled = false;
+            
             if (_isDataDirty)
             {
                 //Debug.Log($"Chunk {Position.x},{Position.y},{Position.z} has dirty data");
