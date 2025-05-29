@@ -772,8 +772,8 @@ GameObject:
   - component: {fileID: 970619890}
   - component: {fileID: 970619889}
   - component: {fileID: 970619891}
-  - component: {fileID: 970619892}
   - component: {fileID: 970619893}
+  - component: {fileID: 970619894}
   m_Layer: 0
   m_Name: Terrain
   m_TagString: Untagged
@@ -875,28 +875,13 @@ MonoBehaviour:
   HeightMax: 10
   HeightMin: 0
   BedrockHeight: -32
+  Trees: 1
   TreeSeed: 1
   TreeThreshold: 0.85
   MinTreeHeight: 8
   MaxTreeHeight: 12
   TreeTrunkValue: 3
   TreeLeavesValue: 8
---- !u!114 &970619892
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 970619888}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d55c9d70d51c4184af2ecd968a92249c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SpaceName: test
-  BaseURL: https://screen.sdq.st:2053/v1/chunk/
-  BatchGetSize: 250
-  BatchGetInterval: 0.5
 --- !u!114 &970619893
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -913,6 +898,19 @@ MonoBehaviour:
   _order: 0
   TreeTrunkValue: 3
   TreeLeavesValue: 12
+--- !u!114 &970619894
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 970619888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fea5dbed416e4af7921db055ded6acd1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  WorldName: TestWorld
 --- !u!1 &1336741799
 GameObject:
   m_ObjectHideFlags: 0
