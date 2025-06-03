@@ -101,6 +101,8 @@ namespace PicaVoxel
 
         public float PersistenceInterval = 2f;
 
+        public bool DelayGeneration;
+        
         // Chunk generation settings
         public MeshingMode MeshingMode;
         public MeshingMode MeshColliderMeshingMode;
@@ -195,6 +197,9 @@ namespace PicaVoxel
             if (!Application.isPlaying)
                 return;
 
+            if (DelayGeneration)
+                return;
+            
             foreach (Chunk chunk in Chunks.Values)
             {
                 chunk.CheckGeneration();
