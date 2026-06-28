@@ -1,4 +1,4 @@
-﻿/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
 // 
 // PicaVoxel - The tiny voxel engine for Unity - http://picavoxel.com
 // By Gareth Williams - @garethiw - http://gareth.pw
@@ -317,7 +317,7 @@ namespace PicaVoxel
                                         rot = Quaternion.Euler(0, 90f * (v.State-2), 0);
                                     int startIndex = vertices.Count;
                                     foreach (var vert in cb.Vertices)
-                                        vertices.Add(worldOffset +  (Vector3.one * (voxelSize * 0.5f)) + (rot*vert));
+                                        vertices.Add((worldOffset * voxelSize) +  (Vector3.one * (voxelSize * 0.5f)) + (rot*vert));
                                     foreach (var uv in cb.UVs)
                                         uvs.Add(new Vector4(uv.x, uv.y, v.Value, -1));
                                     foreach (var tri in cb.Indices)
