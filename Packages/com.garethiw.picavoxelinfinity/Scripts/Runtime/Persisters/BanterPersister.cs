@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
@@ -43,7 +43,13 @@ namespace PicaVoxel
         {
             string key = $"{SpaceName}_{vol.Identifier.Replace("{", "").Replace("}", "")}_{x}_{y}_{z}";
 
-            _ = Task.Run(()=>PostDataAsync(key, data));
+            byte[] payload = new byte[12 + data.Length];
+            Buffer.BlockCopy(BitConverter.GetBytes(x), 0, payload, 0, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(y), 0, payload, 4, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(z), 0, payload, 8, 4);
+            Buffer.BlockCopy(data, 0, payload, 12, data.Length);
+
+            _ = Task.Run(()=>PostDataAsync(key, payload));
 
             return true;
         }
@@ -102,37 +108,34 @@ namespace PicaVoxel
 
                         try
                         {
-                            string[] keysplit = keys.Split(',');
-
                             using (MemoryStream stream = new MemoryStream(task.Result))
                             {
                                 using (BinaryReader reader = new BinaryReader(stream))
                                 {
-                                    int n = 0;
                                     while (reader.BaseStream.Position < reader.BaseStream.Length)
                                     {
                                         int l = reader.ReadInt32();
-                                        if (l == 0)
+                                        if (l < 12)
                                         {
-                                            n++;
+                                            if (l > 0)
+                                                reader.ReadBytes(l);
                                             continue;
                                         }
                                         
                                         byte[] data = reader.ReadBytes(l);
 
-                                        string key = keysplit[n];
-                                        string[] parts = key.Split('_');
+                                        int cx = BitConverter.ToInt32(data, 0);
+                                        int cy = BitConverter.ToInt32(data, 4);
+                                        int cz = BitConverter.ToInt32(data, 8);
 
-                                        //Debug.Log($"{n}: {key}");
-                                        
-                                        n++;
-                                        
-                                        Chunk c = _volume.GetChunk((int.Parse(parts[2]), int.Parse(parts[3]),
-                                            int.Parse(parts[4])));
+                                        Chunk c = _volume.GetChunk((cx, cy, cz));
                                         if (!c)
                                             continue;
 
-                                        c.LoadChanges(data);
+                                        byte[] strippedData = new byte[l - 12];
+                                        Buffer.BlockCopy(data, 12, strippedData, 0, l - 12);
+
+                                        c.LoadChanges(strippedData);
                                     }
                                 }
                             }
