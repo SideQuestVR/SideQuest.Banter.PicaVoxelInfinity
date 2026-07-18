@@ -108,32 +108,64 @@ namespace PicaVoxel
 
                         try
                         {
+                            string[] keysplit = keys.Split(',');
+                            int recordSize = 12 + Voxel.BYTE_SIZE;
+
                             using (MemoryStream stream = new MemoryStream(task.Result))
                             {
                                 using (BinaryReader reader = new BinaryReader(stream))
                                 {
+                                    int n = 0;
                                     while (reader.BaseStream.Position < reader.BaseStream.Length)
                                     {
                                         int l = reader.ReadInt32();
-                                        if (l < 12)
+                                        if (l == 0)
                                         {
-                                            if (l > 0)
-                                                reader.ReadBytes(l);
+                                            n++;
                                             continue;
                                         }
                                         
                                         byte[] data = reader.ReadBytes(l);
 
-                                        int cx = BitConverter.ToInt32(data, 0);
-                                        int cy = BitConverter.ToInt32(data, 4);
-                                        int cz = BitConverter.ToInt32(data, 8);
+                                        int cx = 0;
+                                        int cy = 0;
+                                        int cz = 0;
+                                        byte[] strippedData = null;
+
+                                        if (l % recordSize == 0)
+                                        {
+                                            // Old format: parse coordinates from the end of the key
+                                            string key = keysplit[n];
+                                            string[] parts = key.Split('_');
+                                            cx = int.Parse(parts[parts.Length - 3]);
+                                            cy = int.Parse(parts[parts.Length - 2]);
+                                            cz = int.Parse(parts[parts.Length - 1]);
+                                            strippedData = data;
+
+                                            // Auto-migrate: save the new format back to the server
+                                            SaveChunk(_volume, cx, cy, cz, data);
+                                        }
+                                        else if (l >= 12 && (l - 12) % recordSize == 0)
+                                        {
+                                            // New format: parse coordinates from header
+                                            cx = BitConverter.ToInt32(data, 0);
+                                            cy = BitConverter.ToInt32(data, 4);
+                                            cz = BitConverter.ToInt32(data, 8);
+
+                                            strippedData = new byte[l - 12];
+                                            Buffer.BlockCopy(data, 12, strippedData, 0, l - 12);
+                                        }
+                                        else
+                                        {
+                                            n++;
+                                            continue;
+                                        }
+
+                                        n++;
 
                                         Chunk c = _volume.GetChunk((cx, cy, cz));
                                         if (!c)
                                             continue;
-
-                                        byte[] strippedData = new byte[l - 12];
-                                        Buffer.BlockCopy(data, 12, strippedData, 0, l - 12);
 
                                         c.LoadChanges(strippedData);
                                     }

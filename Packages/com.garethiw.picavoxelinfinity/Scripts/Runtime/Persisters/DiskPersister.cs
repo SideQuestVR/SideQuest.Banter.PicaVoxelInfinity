@@ -67,19 +67,40 @@ namespace PicaVoxel
                 return false;
             }
 
-            if (data.Length < 12)
+            int recordSize = 12 + Voxel.BYTE_SIZE;
+            int cx, cy, cz;
+            byte[] strippedData;
+
+            if (data.Length % recordSize == 0)
             {
-                Debug.LogWarning($"DiskPersister LoadChunk ({WorldName}_{vol.Identifier}_{x}_{y}_{z}) data size {data.Length} is less than 12 bytes header.");
-                return false;
+                // Old format: coordinates are the expected x, y, z
+                cx = x;
+                cy = y;
+                cz = z;
+                strippedData = data;
+
+                // Auto-migrate: save the new format back to disk
+                SaveChunk(vol, x, y, z, data);
             }
-
-            int cx = BitConverter.ToInt32(data, 0);
-            int cy = BitConverter.ToInt32(data, 4);
-            int cz = BitConverter.ToInt32(data, 8);
-
-            if (cx != x || cy != y || cz != z)
+            else if (data.Length >= 12 && (data.Length - 12) % recordSize == 0)
             {
-                Debug.LogError($"DiskPersister LoadChunk coordinate mismatch! Expected ({x},{y},{z}) but got ({cx},{cy},{cz}) in file {fn}");
+                // New format: read coordinates from header
+                cx = BitConverter.ToInt32(data, 0);
+                cy = BitConverter.ToInt32(data, 4);
+                cz = BitConverter.ToInt32(data, 8);
+
+                if (cx != x || cy != y || cz != z)
+                {
+                    Debug.LogError($"DiskPersister LoadChunk coordinate mismatch! Expected ({x},{y},{z}) but got ({cx},{cy},{cz}) in file {fn}");
+                    return false;
+                }
+
+                strippedData = new byte[data.Length - 12];
+                Buffer.BlockCopy(data, 12, strippedData, 0, data.Length - 12);
+            }
+            else
+            {
+                Debug.LogError($"DiskPersister LoadChunk invalid file size: {data.Length} bytes in file {fn}");
                 return false;
             }
 
@@ -87,9 +108,6 @@ namespace PicaVoxel
             if (!c)
                 return false;
             
-            byte[] strippedData = new byte[data.Length - 12];
-            Buffer.BlockCopy(data, 12, strippedData, 0, data.Length - 12);
-
             c.LoadChanges(strippedData);
 
             return true;
