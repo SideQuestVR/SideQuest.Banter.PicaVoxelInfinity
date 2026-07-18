@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.IO;
 using UnityEngine;
@@ -28,9 +28,15 @@ namespace PicaVoxel
             
             string fn = Path.Combine(_basePath, $"{vol.Identifier}_{x}_{y}_{z}.chunk");
 
+            byte[] payload = new byte[12 + data.Length];
+            Buffer.BlockCopy(BitConverter.GetBytes(x), 0, payload, 0, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(y), 0, payload, 4, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(z), 0, payload, 8, 4);
+            Buffer.BlockCopy(data, 0, payload, 12, data.Length);
+
             try
             {
-                File.WriteAllBytes(fn, data);
+                File.WriteAllBytes(fn, payload);
             }
             catch (Exception e)
             {
@@ -61,11 +67,30 @@ namespace PicaVoxel
                 return false;
             }
 
+            if (data.Length < 12)
+            {
+                Debug.LogWarning($"DiskPersister LoadChunk ({WorldName}_{vol.Identifier}_{x}_{y}_{z}) data size {data.Length} is less than 12 bytes header.");
+                return false;
+            }
+
+            int cx = BitConverter.ToInt32(data, 0);
+            int cy = BitConverter.ToInt32(data, 4);
+            int cz = BitConverter.ToInt32(data, 8);
+
+            if (cx != x || cy != y || cz != z)
+            {
+                Debug.LogError($"DiskPersister LoadChunk coordinate mismatch! Expected ({x},{y},{z}) but got ({cx},{cy},{cz}) in file {fn}");
+                return false;
+            }
+
             Chunk c = vol.GetChunk((x, y, z));
             if (!c)
                 return false;
             
-            c.LoadChanges(data);
+            byte[] strippedData = new byte[data.Length - 12];
+            Buffer.BlockCopy(data, 12, strippedData, 0, data.Length - 12);
+
+            c.LoadChanges(strippedData);
 
             return true;
         }
