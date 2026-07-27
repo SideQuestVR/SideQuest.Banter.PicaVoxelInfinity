@@ -24,6 +24,7 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain"
             Cull Back
 
             HLSLPROGRAM
+            #pragma target 4.5
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
@@ -154,6 +155,7 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain"
             Cull Back
 
             HLSLPROGRAM
+            #pragma target 4.5
             #pragma vertex ShadowVert
             #pragma fragment ShadowFrag
             #pragma multi_compile_instancing
@@ -248,6 +250,7 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain"
             Cull Back
 
             HLSLPROGRAM
+            #pragma target 4.5
             #pragma vertex DepthVert
             #pragma fragment DepthFrag
             #pragma multi_compile_instancing
