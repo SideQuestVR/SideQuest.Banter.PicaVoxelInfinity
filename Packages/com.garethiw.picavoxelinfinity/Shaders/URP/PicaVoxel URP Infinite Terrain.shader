@@ -20,7 +20,7 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain"
             Tags { "LightMode" = "UniversalForward" }
 
             Blend SrcAlpha OneMinusSrcAlpha, SrcAlpha OneMinusSrcAlpha
-            ZWrite Off
+            ZWrite On
             Cull Back
 
             HLSLPROGRAM
@@ -55,6 +55,7 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain"
                 float3 positionWS : TEXCOORD2;
                 float3 normalWS : TEXCOORD3;
                 float fogFactor : TEXCOORD4;
+                half3 vertexSH : TEXCOORD5;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -101,6 +102,7 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain"
                 output.uv = input.texcoord;
                 output.color = input.color;
                 output.fogFactor = ComputeFogFactor(vertexInput.positionCS.z);
+                output.vertexSH = SampleSH(output.normalWS);
 
                 return output;
             }
@@ -127,6 +129,7 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain"
                 inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
                 inputData.fogCoord = InitializeInputDataFog(float4(input.positionWS, 1.0), input.fogFactor);
                 inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
+                inputData.bakedGI = input.vertexSH;
 
                 SurfaceData surfaceData = (SurfaceData)0;
                 surfaceData.albedo = albedo;
