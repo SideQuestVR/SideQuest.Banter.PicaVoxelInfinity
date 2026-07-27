@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -165,7 +165,7 @@ namespace PicaVoxel
                 return;
             _cursorUpdate = 0f;
             
-            _selectedVolume = VolumeRaycast(ray, 0.001f*_lastVoxelSize, out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
+            _selectedVolume = VolumeRaycast(ray, 0.005f, out _selectedChunk, out _selectedVoxel, out Vector3? hitPos);
             if(hitPos.HasValue)
                 Debug.DrawLine(ray.origin, hitPos.Value, Color.red);
             

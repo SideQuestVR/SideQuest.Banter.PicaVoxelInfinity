@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -26,6 +26,7 @@ namespace PicaVoxel
 
         private byte[] _modelBytes;
         private Vector3Int _modelSize;
+        public Vector3Int ModelSize => _modelSize;
         private Voxel[] _voxels;
         
         private void Start()
@@ -86,8 +87,13 @@ namespace PicaVoxel
                 var reader = new VoxReader(stream, loader);
                 reader.ReadFromStream();
 
-                if (loader.Models.Count == 1)
+                if (loader.Models.Count >= 1)
                 {
+                    if (loader.Models.Count > 1)
+                    {
+                        Debug.LogWarning($"[MagicaVoxelGenerator] Warning: .vox file contains {loader.Models.Count} models, but only the first one is loaded. Please merge your models/layers in MagicaVoxel into a single object before exporting.");
+                    }
+
                     MagicaLoader.Model model = loader.Models[0];
                     _modelSize = new Vector3Int(model.Size.x, model.Size.y, model.Size.z);
                     _voxels = new Voxel[_modelSize.x * _modelSize.y * _modelSize.z];
@@ -102,6 +108,10 @@ namespace PicaVoxel
                                         State = 1, 
                                         Value = 1
                                     };
+                }
+                else
+                {
+                    Debug.LogError("[MagicaVoxelGenerator] No models found in the .vox file!");
                 }
             }
 
