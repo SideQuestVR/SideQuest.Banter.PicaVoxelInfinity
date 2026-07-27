@@ -1,4 +1,4 @@
-﻿/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
 // 
 // PicaVoxel - The tiny voxel engine for Unity - http://picavoxel.com
 // By Gareth Williams - @garethiw - http://gareth.pw
@@ -108,7 +108,7 @@ namespace PicaVoxel
         public MeshingMode MeshColliderMeshingMode;
         public bool GenerateMeshColliderSeparately = false;
         public Material Material;
-        public PhysicMaterial PhysicMaterial;
+        public PhysicsMaterial PhysicMaterial;
         public bool CollisionTrigger;
         public CollisionMode CollisionMode;
         public float SelfShadingIntensity = 0.2f;
@@ -351,12 +351,54 @@ namespace PicaVoxel
 
         private void GenerateFiniteChunks()
         {
+            if (_voxelDataGenerator is MagicaVoxelGenerator mvg)
+            {
+                Vector3Int size = mvg.ModelSize;
+                int maxX = (size.x + ChunkSize - 1) / ChunkSize;
+                int maxY = (size.y + ChunkSize - 1) / ChunkSize;
+                int maxZ = (size.z + ChunkSize - 1) / ChunkSize;
+
+                Voxel v = new Voxel();
+                for (int cx = 0; cx < maxX; cx++)
+                    for (int cy = 0; cy < maxY; cy++)
+                        for (int cz = 0; cz < maxZ; cz++)
+                        {
+                            bool hasVoxel = false;
+                            for (int x = cx * ChunkSize; x < (cx + 1) * ChunkSize; x++)
+                            {
+                                for (int y = cy * ChunkSize; y < (cy + 1) * ChunkSize; y++)
+                                {
+                                    for (int z = cz * ChunkSize; z < (cz + 1) * ChunkSize; z++)
+                                    {
+                                        if (mvg.GenerateVoxel(x, y, z, ref v))
+                                        {
+                                            hasVoxel = true;
+                                            break;
+                                        }
+                                    }
+                                    if (hasVoxel) break;
+                                }
+                                if (hasVoxel) break;
+                            }
+
+                            if (hasVoxel)
+                            {
+                                if (!Chunks.ContainsKey((cx, cy, cz)))
+                                {
+                                    Chunks[(cx, cy, cz)] = Instantiate(ChunkPrefab, transform, false).GetComponent<Chunk>();
+                                    Chunks[(cx, cy, cz)].Initialize((cx, cy, cz), this);
+                                }
+                            }
+                        }
+                return;
+            }
+
             bool foundvox = true;
 
             int r = 1;
 
-            Voxel v = new Voxel();
-            if (_voxelDataGenerator.GenerateVoxel(0, 0, 0, ref v))
+            Voxel v2 = new Voxel();
+            if (_voxelDataGenerator.GenerateVoxel(0, 0, 0, ref v2))
             {
                 if (!Chunks.ContainsKey((0, 0, 0)))
                     Chunks[(0, 0, 0)] = Instantiate(ChunkPrefab, transform, false).GetComponent<Chunk>();
@@ -373,7 +415,7 @@ namespace PicaVoxel
                             if ((x != -r && x != r) && (y != -r && y != r) && (z != -r && z != r))
                                 continue;
 
-                            if (_voxelDataGenerator.GenerateVoxel(x, y, z, ref v))
+                            if (_voxelDataGenerator.GenerateVoxel(x, y, z, ref v2))
                             {
                                 foundvox = true;
 

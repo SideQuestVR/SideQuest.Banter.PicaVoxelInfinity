@@ -1,4 +1,4 @@
-﻿/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
 // 
 // PicaVoxel - The tiny voxel engine for Unity - http://picavoxel.com
 // By Gareth Williams - @garethiw - http://gareth.pw
@@ -317,7 +317,7 @@ namespace PicaVoxel
                                         rot = Quaternion.Euler(0, 90f * (v.State-2), 0);
                                     int startIndex = vertices.Count;
                                     foreach (var vert in cb.Vertices)
-                                        vertices.Add(worldOffset +  (Vector3.one * (voxelSize * 0.5f)) + (rot*vert));
+                                        vertices.Add((worldOffset * voxelSize) +  (Vector3.one * (voxelSize * 0.5f)) + (rot*vert));
                                     foreach (var uv in cb.UVs)
                                         uvs.Add(new Vector4(uv.x, uv.y, v.Value, -1));
                                     foreach (var tri in cb.Indices)
@@ -339,7 +339,7 @@ namespace PicaVoxel
                             {
                                 for (int f = 0; f < 6; f++)
                                 {
-                                    GetVoxelFace(vf, x, y, z, f, ref invoxels, chunk, nbs, voxelSize, xOffset, yOffset, zOffset, xSize, ySize, zSize, ub0, ub1, ub2, selfShadeIntensity);
+                                    GetVoxelFace(vf, x, y, z, f, ref invoxels, chunk, nbs, voxelSize, xOffset, yOffset, zOffset, xSize, ySize, zSize, ub0, ub1, ub2, selfShadeIntensity, cbs);
                                     if (vf.Active)
                                     {
                                         // Draw backface for transparent cubes
@@ -358,7 +358,7 @@ namespace PicaVoxel
 
                             for (int f = 0; f < 6; f++)
                             {
-                                GetVoxelFace(vf, x, y, z, f, ref invoxels, chunk, nbs, voxelSize, xOffset, yOffset, zOffset, xSize, ySize, zSize, ub0, ub1, ub2, selfShadeIntensity);
+                                GetVoxelFace(vf, x, y, z, f, ref invoxels, chunk, nbs, voxelSize, xOffset, yOffset, zOffset, xSize, ySize, zSize, ub0, ub1, ub2, selfShadeIntensity, cbs);
 
                                 if (vf.Active)
                                 {
@@ -385,7 +385,7 @@ namespace PicaVoxel
           
         }
 
-        static void GetVoxelFace(VoxelFace voxelFace, int x, int y, int z, int side, ref Voxel[] invoxels, Chunk chunk, Chunk[] nbs, float voxelSize, int xOffset, int yOffset, int zOffset, int xSize, int ySize, int zSize, int ub0, int ub1, int ub2, float selfShadeIntensity)
+        static void GetVoxelFace(VoxelFace voxelFace, int x, int y, int z, int side, ref Voxel[] invoxels, Chunk chunk, Chunk[] nbs, float voxelSize, int xOffset, int yOffset, int zOffset, int xSize, int ySize, int zSize, int ub0, int ub1, int ub2, float selfShadeIntensity, Dictionary<int, CustomBlockData> cbs = null)
         {
             Voxel v = invoxels[(x + xOffset) + (ub0 + 1)*((y + yOffset) + (ub1 + 1)*(z + zOffset))];
 
@@ -451,20 +451,29 @@ namespace PicaVoxel
 
             switch (side)
             {
-                case 0: voxelFace.Active = !IsVoxelAt(x + xOffset, y + yOffset, z+zOffset - 1, ref invoxels, chunk, nbs, ub0, ub1, ub2); break;
-                case 1: voxelFace.Active = !IsVoxelAt(x + xOffset, y + yOffset, z + zOffset + 1, ref invoxels, chunk, nbs, ub0, ub1, ub2); break;
-                case 2: voxelFace.Active = !IsVoxelAt(x + xOffset + 1, y + yOffset, z + zOffset, ref invoxels, chunk, nbs, ub0, ub1, ub2); break;
-                case 3: voxelFace.Active = !IsVoxelAt(x + xOffset - 1, y + yOffset, z + zOffset, ref invoxels, chunk, nbs, ub0, ub1, ub2); break;
-                case 4: voxelFace.Active = !IsVoxelAt(x + xOffset, y + yOffset + 1, z + zOffset, ref invoxels, chunk, nbs, ub0, ub1, ub2); break;
-                case 5: voxelFace.Active = !IsVoxelAt(x + xOffset, y + yOffset - 1, z + zOffset, ref invoxels, chunk, nbs, ub0, ub1, ub2); break;
+                case 0: voxelFace.Active = !IsVoxelAt(x + xOffset, y + yOffset, z+zOffset - 1, ref invoxels, chunk, nbs, ub0, ub1, ub2, cbs); break;
+                case 1: voxelFace.Active = !IsVoxelAt(x + xOffset, y + yOffset, z + zOffset + 1, ref invoxels, chunk, nbs, ub0, ub1, ub2, cbs); break;
+                case 2: voxelFace.Active = !IsVoxelAt(x + xOffset + 1, y + yOffset, z + zOffset, ref invoxels, chunk, nbs, ub0, ub1, ub2, cbs); break;
+                case 3: voxelFace.Active = !IsVoxelAt(x + xOffset - 1, y + yOffset, z + zOffset, ref invoxels, chunk, nbs, ub0, ub1, ub2, cbs); break;
+                case 4: voxelFace.Active = !IsVoxelAt(x + xOffset, y + yOffset + 1, z + zOffset, ref invoxels, chunk, nbs, ub0, ub1, ub2, cbs); break;
+                case 5: voxelFace.Active = !IsVoxelAt(x + xOffset, y + yOffset - 1, z + zOffset, ref invoxels, chunk, nbs, ub0, ub1, ub2, cbs); break;
             }
 
         }
 
-        static bool IsVoxelAt(int x, int y, int z, ref Voxel[] invoxels, Chunk chunk, Chunk[] nbs, int ub0, int ub1, int ub2)
+        static bool IsVoxelAt(int x, int y, int z, ref Voxel[] invoxels, Chunk chunk, Chunk[] nbs, int ub0, int ub1, int ub2, Dictionary<int, CustomBlockData> cbs = null)
         {
             if(!(x<0 || x > ub0 || y < 0 || y > ub1 || z < 0 || z > ub2))
-                return invoxels[x + (ub0 + 1)*(y + (ub1 + 1)*z)].State==1;
+            {
+                Voxel neighborVoxel = invoxels[x + (ub0 + 1)*(y + (ub1 + 1)*z)];
+                if (neighborVoxel.State != 1) return false;
+                if (cbs != null && cbs.TryGetValue(neighborVoxel.Value, out CustomBlockData cb))
+                {
+                    if (cb.HasTransparency || cb.HasMesh)
+                        return false;
+                }
+                return true;
+            }
             
             int xcs = chunk.Volume.ChunkSize;
             int ycs = chunk.Volume.ChunkSize;
@@ -477,8 +486,6 @@ namespace PicaVoxel
             int vcpx = x;
             int vcpy = y;
             int vcpz = z;
-            //(int x, int y, int z) ccp = (1,1,1);
-            //(int x, int y, int z) vcp = (x, y, z);
             
             if (x < 0)
             {
@@ -517,10 +524,15 @@ namespace PicaVoxel
             }
 
             Chunk cc = nbs[ccpx + 3 * (ccpy + 3 * ccpz)];
-            return (cc is not null) && cc.Voxels[vcpx + xcs * (vcpy + ycs * vcpz)].State==1;
-            
-            //|| x > ub0 || y < 0 || y > ub1 || z < 0 || z > ub2) return false;
-            return invoxels[x + (ub0 + 1)*(y + (ub1 + 1)*z)].Active;
+            if (cc == null) return false;
+            Voxel neighborVoxelOuter = cc.Voxels[vcpx + xcs * (vcpy + ycs * vcpz)];
+            if (neighborVoxelOuter.State != 1) return false;
+            if (cbs != null && cbs.TryGetValue(neighborVoxelOuter.Value, out CustomBlockData cbOuter))
+            {
+                if (cbOuter.HasTransparency || cbOuter.HasMesh)
+                    return false;
+            }
+            return true;
         }
     
         static void Quad(Vector3 topLeft, Vector3 topRight, Vector3 bottomRight,Vector3 bottomLeft,int dir,float voxelSize,float overlapAmount, VoxelFace voxel, bool backFace,float selfShadeIntensity,List<Vector3> vertices, List<int> indexes, List<Color32> colors, List<Vector4> uvs)
