@@ -24,7 +24,6 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain"
             Cull Back
 
             HLSLPROGRAM
-            #pragma target 4.5
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
@@ -32,8 +31,6 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain"
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
-            #pragma instancing_options renderinglayer
-            #pragma multi_compile _ DOTS_INSTANCING_ON
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -158,12 +155,9 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain"
             Cull Back
 
             HLSLPROGRAM
-            #pragma target 4.5
             #pragma vertex ShadowVert
             #pragma fragment ShadowFrag
             #pragma multi_compile_instancing
-            #pragma instancing_options renderinglayer
-            #pragma multi_compile _ DOTS_INSTANCING_ON
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -253,12 +247,9 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain"
             Cull Back
 
             HLSLPROGRAM
-            #pragma target 4.5
             #pragma vertex DepthVert
             #pragma fragment DepthFrag
             #pragma multi_compile_instancing
-            #pragma instancing_options renderinglayer
-            #pragma multi_compile _ DOTS_INSTANCING_ON
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
