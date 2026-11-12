@@ -8,7 +8,11 @@
   "documentationUrl": "https://example.com/",
   "changelogUrl": "",
   "licensesUrl": "",
-  "dependencies": {},
+  "dependencies": {
+    "com.unity.burst": "1.8.12",
+    "com.unity.collections": "2.4.3",
+    "com.unity.mathematics": "1.3.2"
+  },
  "keywords": [],
   "author": {
     "name": "Gareth Williams",

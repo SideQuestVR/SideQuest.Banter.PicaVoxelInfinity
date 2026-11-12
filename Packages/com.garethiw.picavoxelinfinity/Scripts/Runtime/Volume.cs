@@ -8,7 +8,12 @@ using System;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using JetBrains.Annotations;
+using Unity.Collections;
+using Unity.Jobs;
+using Unity.Jobs.LowLevel.Unsafe;
+using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine.Rendering;
 #if UNITY_EDITOR
@@ -126,6 +131,66 @@ namespace PicaVoxel
         public int ChunkLayer;
         [HideInInspector] public I_ChunkProcessor[] ChunkProcessors;
 
+        // Performance (Culled meshing) //////////////////////////////////
+        [Header("Performance")]
+        [Tooltip("Chunks meshing at once, on Unity's job workers. 0 picks from the worker count.")]
+        public int MaxConcurrentMeshJobs = 0;
+        [Tooltip("Chunks generating voxel data at once, on the thread pool. 0 picks from the core count.")]
+        public int MaxConcurrentDataJobs = 0;
+        [Tooltip("Main-thread time per frame for uploading finished meshes, in ms (at least one a frame).")]
+        public float MeshApplyBudgetMs = 2f;
+        [Tooltip("Main-thread time per frame for creating or recycling chunks, in ms (at least one a frame).")]
+        public float ChunkCreateBudgetMs = 2f;
+        [Tooltip("Frames a chunk may wait for its neighbours to finish generating before meshing anyway.")]
+        public int MaxNeighbourWaitFrames = 60;
+        [Tooltip("Seconds a chunk that is already showing a mesh waits before re-meshing for a neighbour's new data, " +
+                 "so several neighbours arriving together cost one re-mesh. Edits re-mesh at once.")]
+        public float NeighbourRemeshDelay = 0.3f;
+        [Tooltip("Merge coplanar faces in collision meshes: the same surfaces with far fewer triangles to cook.")]
+        public bool MergeColliderFaces = true;
+        [Tooltip("Re-mesh the outer ring of chunks every pass, as older versions did. Neighbours now re-mesh " +
+                 "when they need to, so this only costs time.")]
+        public bool PeriodicRemesh = false;
+
+        private static int s_mainThreadId = -1;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void CaptureMainThread() => s_mainThreadId = Thread.CurrentThread.ManagedThreadId;
+
+        /// <summary>Whether this is Unity's main thread (true before it is known).</summary>
+        public static bool IsMainThread => s_mainThreadId < 0 || Thread.CurrentThread.ManagedThreadId == s_mainThreadId;
+
+        // Culled chunks mesh in jobs scheduled here; other modes mesh on the thread pool as before
+        internal bool UseMeshJobs;
+        // Time.unscaledTime for this frame's update, read per chunk
+        internal float FrameTime;
+
+        // The custom blocks as native tables for mesh jobs, rebuilt when CustomBlocksDict changes size
+        internal CustomBlockTables BlockTables;
+        private int _blockTablesCount = -1;
+
+        private readonly List<MeshJobContext> _meshContexts = new();
+        private readonly Stack<MeshJobContext> _freeMeshContexts = new();
+        private MeshJobContext _immediateMeshContext;
+        private int _busyMeshContexts;
+        private int _dataJobsInFlight;
+
+        private readonly List<(int dist, Chunk chunk)> _dataCandidates = new();
+        private readonly List<(int dist, Chunk chunk)> _meshCandidates = new();
+        private readonly List<(int dist, Chunk chunk)> _finishedMeshes = new();
+        private static readonly Comparison<(int dist, Chunk chunk)> NearestFirst = (a, b) => a.dist.CompareTo(b.dist);
+        private readonly System.Diagnostics.Stopwatch _budgetWatch = new();
+        private Vector3Int _focusChunk;
+
+        // Positions waiting for a chunk, nearest last (they are taken from the end)
+        private readonly List<(int x, int y, int z)> _createQueue = new();
+        private readonly HashSet<(int x, int y, int z)> _createPending = new();
+        private bool _createQueueDirty;
+        private Vector3Int _createQueueSortedFor;
+        private readonly HashSet<Chunk> _freeSet = new();
+        private Comparison<(int x, int y, int z)> _farthestFirst;
+        /////////////////////////////////////////////////////////////////
+
         private Transform _cameraTransform;
         private float _infiniteUpdateTimer;
         private I_VoxelDataGenerator _voxelDataGenerator;
@@ -135,6 +200,7 @@ namespace PicaVoxel
 
         private void OnEnable()
         {
+            s_mainThreadId = Thread.CurrentThread.ManagedThreadId;
             if (string.IsNullOrEmpty(Identifier))
             {
                 Identifier = Guid.NewGuid().ToString();
@@ -168,6 +234,7 @@ namespace PicaVoxel
                              (transform.position - (ChunkSize * VoxelSize * 0.5f * Vector3.one));
 
             _isFirstPass = true;
+            UseMeshJobs = MeshingMode == MeshingMode.Culled;
 
             CustomBlocksDict.Clear();
             foreach (CustomBlock cb in CustomBlocks)
@@ -208,12 +275,36 @@ namespace PicaVoxel
 
             if (DelayGeneration)
                 return;
-            
+
+            UpdateFocus();
+
+            _dataCandidates.Clear();
+            _meshCandidates.Clear();
+            _finishedMeshes.Clear();
+            UseMeshJobs = MeshingMode == MeshingMode.Culled;
+            FrameTime = Time.unscaledTime;
             foreach (Chunk chunk in Chunks.Values)
             {
                 chunk.CheckGeneration();
                 chunk.Persist();
+
+                if (!UseMeshJobs)
+                    continue;
+                // Most chunks want nothing most frames, so the distance is only worked out for those that do
+                if (chunk.WantsData)
+                    _dataCandidates.Add((FocusDistance(chunk.Position), chunk));
+                if (chunk.HasMeshJob)
+                {
+                    if (chunk.HasFinishedMeshJob)
+                        _finishedMeshes.Add((FocusDistance(chunk.Position), chunk));
+                }
+                else if (chunk.WantsMeshJob)
+                    _meshCandidates.Add((FocusDistance(chunk.Position), chunk));
             }
+
+            StartDataJobs();
+            FinishMeshJobs();
+            StartMeshJobs();
 
             if (!IsInfinite && _isFirstPass && IsDataReady)
             {
@@ -224,6 +315,8 @@ namespace PicaVoxel
 
             if (!IsInfinite)
                 return;
+
+            ProcessCreateQueue();
 
             _infiniteUpdateTimer += Time.deltaTime;
             if (_infiniteUpdateTimer >= InfiniteUpdateInterval)
@@ -275,7 +368,7 @@ namespace PicaVoxel
 
                         if ((ccpos - cpos).sqrMagnitude > InfiniteChunkRadius * InfiniteChunkRadius)
                         {
-                            if (!_freeChunks.Contains(chunk))
+                            if (_freeSet.Add(chunk))
                                 _freeChunks.Enqueue(chunk);
                         }
                     }
@@ -294,14 +387,21 @@ namespace PicaVoxel
                         }
                     }
 
+                    PrunePendingWrites();
+
                     slice++;
                     return;
                 }
 
                 int s = 1;
-                for (int z = thisUpdateccpos.z - InfiniteChunkRadius; z < thisUpdateccpos.z + InfiniteChunkRadius; z++)
-                    for (int y = thisUpdateccpos.y - InfiniteChunkRadius; y < thisUpdateccpos.y + InfiniteChunkRadius; y++)
-                        for (int x = thisUpdateccpos.x - InfiniteChunkRadius; x < thisUpdateccpos.x + InfiniteChunkRadius; x++)
+                // The loops stop at the volume's bounds rather than skipping every position past them (the same
+                // positions, in the same order, so slicing is unchanged)
+                SweepRange(thisUpdateccpos.x, InfiniteChunkBounds.x, out int x0, out int x1);
+                SweepRange(thisUpdateccpos.y, InfiniteChunkBounds.y, out int y0, out int y1);
+                SweepRange(thisUpdateccpos.z, InfiniteChunkBounds.z, out int z0, out int z1);
+                for (int z = z0; z < z1; z++)
+                    for (int y = y0; y < y1; y++)
+                        for (int x = x0; x < x1; x++)
                         {
                             if ((InfiniteChunkBounds.x > 0 &&
                                  (x < -InfiniteChunkBounds.x || x > InfiniteChunkBounds.x)) ||
@@ -327,30 +427,18 @@ namespace PicaVoxel
                                     continue;
                             }
 
-                            if (Chunks.ContainsKey((x, y, z)))
+                            if (Chunks.TryGetValue((x, y, z), out Chunk existingChunk))
                             {
-                                if (!dataPass)
+                                if (!dataPass && PeriodicRemesh)
                                 {
-                                    Chunks[(x, y, z)].SetMeshDirty();
+                                    existingChunk.SetMeshDirty();
                                 }
 
                                 continue;
                             }
 
-                            if (_freeChunks.TryDequeue(out Chunk reuse))
-                            {
-                                reuse.Initialize((x, y, z), this);
-                                lock (_chunksLock)
-                                    Chunks.Add((x, y, z), reuse);
-                            }
-                            else
-                            {
-                                //Debug.Log($"No available chunks to re-use at {x}, {y}, {z}");
-                                Chunk newChunk = Instantiate(ChunkPrefab, transform, false).GetComponent<Chunk>();
-                                newChunk.Initialize((x, y, z), this);
-                                lock (_chunksLock)
-                                    Chunks[(x, y, z)] = newChunk;
-                            }
+                            // Created (or recycled) by ProcessCreateQueue, nearest first and a few a frame
+                            QueueCreate((x, y, z));
                         }
 
                 if (_isFirstPass)
@@ -371,6 +459,365 @@ namespace PicaVoxel
                 }
             }
         }
+
+        // Scheduling //////////////////////////////////////////////////////
+
+        // The infinite sweep's range on one axis: radius around the centre, cut to the bounds when there are some
+        private void SweepRange(int centre, int bound, out int lo, out int hi)
+        {
+            lo = centre - InfiniteChunkRadius;
+            hi = centre + InfiniteChunkRadius;
+            if (bound > 0)
+            {
+                lo = Math.Max(lo, -bound);
+                hi = Math.Min(hi, bound + 1);
+            }
+        }
+
+        // The chunk the camera is in: work is done nearest to it first
+        private void UpdateFocus()
+        {
+            if (_cameraTransform == null)
+            {
+                Camera cam = Camera.main;
+                if (cam == null) return;
+                _cameraTransform = cam.transform;
+            }
+            float radunit = ChunkSize * VoxelSize;
+            Vector3 camoffset = _cameraTransform.position - (transform.position - radunit * 0.5f * Vector3.one);
+            Vector3 c = camoffset / radunit;
+            _focusChunk = new Vector3Int(Mathf.RoundToInt(c.x), Mathf.RoundToInt(c.y), Mathf.RoundToInt(c.z));
+        }
+
+        private int FocusDistance((int x, int y, int z) p)
+        {
+            int dx = p.x - _focusChunk.x, dy = p.y - _focusChunk.y, dz = p.z - _focusChunk.z;
+            return dx * dx + dy * dy + dz * dz;
+        }
+
+        // Data jobs run on thread-pool threads, which compete with the main and render threads and Unity's job
+        // workers; on a phone-class CPU (Quest) half the cores is plenty
+        private int DataJobLimit => MaxConcurrentDataJobs > 0
+            ? MaxConcurrentDataJobs
+            : Mathf.Clamp(SystemInfo.processorCount / 2, 1, 4);
+
+        private int MeshJobLimit => MaxConcurrentMeshJobs > 0
+            ? MaxConcurrentMeshJobs
+            : Mathf.Clamp(JobsUtility.JobWorkerCount, 2, 8);
+
+        internal void BeginDataJob() => Interlocked.Increment(ref _dataJobsInFlight);
+        internal void EndDataJob() => Interlocked.Decrement(ref _dataJobsInFlight);
+
+        private void StartDataJobs()
+        {
+            int free = DataJobLimit - Volatile.Read(ref _dataJobsInFlight);
+            if (free <= 0 || _dataCandidates.Count == 0)
+                return;
+            if (_dataCandidates.Count > free)
+                _dataCandidates.Sort(NearestFirst);
+            for (int i = 0; i < _dataCandidates.Count && i < free; i++)
+                _dataCandidates[i].chunk.StartDataJob();
+        }
+
+        // Uploads finished meshes, nearest first, until this frame's budget is spent (always at least one)
+        private void FinishMeshJobs()
+        {
+            if (_finishedMeshes.Count == 0)
+                return;
+            _finishedMeshes.Sort(NearestFirst);
+            _budgetWatch.Restart();
+            for (int i = 0; i < _finishedMeshes.Count; i++)
+            {
+                if (i > 0 && _budgetWatch.Elapsed.TotalMilliseconds >= MeshApplyBudgetMs)
+                    break;
+                _finishedMeshes[i].chunk.FinishMeshJob();
+            }
+        }
+
+        private void StartMeshJobs()
+        {
+            if (_meshCandidates.Count == 0)
+                return;
+            int free = MeshJobLimit - _busyMeshContexts;
+            if (free <= 0)
+                return;
+
+            EnsureBlockTables();
+            _meshCandidates.Sort(NearestFirst);
+            int started = 0;
+            // Waiting for neighbours costs 27 lookups a check, so only so many are checked a frame
+            int checks = 32;
+            for (int i = 0; i < _meshCandidates.Count && started < free; i++)
+            {
+                Chunk chunk = _meshCandidates[i].chunk;
+                if (chunk.NeighbourWaitFrames < MaxNeighbourWaitFrames)
+                {
+                    if (checks-- <= 0)
+                        break;
+                    // Mesh once the neighbours are in, rather than now and again as each of them finishes
+                    if (!chunk.NeighboursSettled())
+                    {
+                        chunk.NeighbourWaitFrames++;
+                        continue;
+                    }
+                }
+                chunk.ScheduleMeshJob(RentMeshContext());
+                started++;
+            }
+            if (started > 0)
+                JobHandle.ScheduleBatchedJobs();
+        }
+
+        private MeshJobContext RentMeshContext()
+        {
+            _busyMeshContexts++;
+            if (_freeMeshContexts.Count > 0)
+                return _freeMeshContexts.Pop();
+            var ctx = new MeshJobContext(ChunkSize);
+            _meshContexts.Add(ctx);
+            return ctx;
+        }
+
+        internal void ReturnMeshContext(MeshJobContext ctx)
+        {
+            if (ctx == _immediateMeshContext)
+                return;
+            _busyMeshContexts--;
+            _freeMeshContexts.Push(ctx);
+        }
+
+        /// <summary>The context edits mesh in, on the main thread.</summary>
+        internal MeshJobContext ImmediateMeshContext
+        {
+            get
+            {
+                EnsureBlockTables();
+                if (_immediateMeshContext == null)
+                {
+                    _immediateMeshContext = new MeshJobContext(ChunkSize);
+                    _meshContexts.Add(_immediateMeshContext);
+                }
+                return _immediateMeshContext;
+            }
+        }
+
+        private void CompleteMeshJobs()
+        {
+            foreach (MeshJobContext ctx in _meshContexts)
+                ctx.Handle.Complete();
+        }
+
+        private void EnsureBlockTables()
+        {
+            if (BlockTables.IsCreated && _blockTablesCount == CustomBlocksDict.Count)
+                return;
+            // Jobs in flight read the old tables
+            CompleteMeshJobs();
+            BlockTables.Dispose();
+            BlockTables = BuildBlockTables(CustomBlocksDict);
+            _blockTablesCount = CustomBlocksDict.Count;
+        }
+
+        /// <summary>Flattens the custom blocks into the tables mesh jobs read. Main thread only.</summary>
+        public static CustomBlockTables BuildBlockTables(Dictionary<int, CustomBlockData> blocks)
+        {
+            var flags = new NativeArray<byte>(256, Allocator.Persistent);
+            var ranges = new NativeArray<int4>(256, Allocator.Persistent);
+            var verts = new List<float3>();
+            var normals = new List<float3>();
+            var uvs = new List<float2>();
+            var indices = new List<int>();
+            Mesh scratch = null;
+
+            foreach (KeyValuePair<int, CustomBlockData> kv in blocks)
+            {
+                if (kv.Key < 0 || kv.Key > 255 || kv.Value == null)
+                    continue;
+                CustomBlockData cb = kv.Value;
+                byte f = CustomBlockTables.IsCustom;
+                if (cb.HasTransparency) f |= CustomBlockTables.Transparent;
+                if (cb.AllowOrientation) f |= CustomBlockTables.AllowOrientation;
+
+                if (cb.HasMesh && cb.Vertices != null && cb.Indices != null)
+                {
+                    f |= CustomBlockTables.HasMesh;
+                    // The normals RecalculateNormals gave these vertices in the old managed mesher
+                    if (scratch == null) scratch = new Mesh();
+                    scratch.Clear();
+                    scratch.indexFormat = cb.Vertices.Length > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16;
+                    scratch.SetVertices(cb.Vertices);
+                    scratch.SetTriangles(cb.Indices, 0);
+                    scratch.RecalculateNormals();
+                    Vector3[] n = scratch.normals;
+
+                    ranges[kv.Key] = new int4(verts.Count, cb.Vertices.Length, indices.Count, cb.Indices.Length);
+                    for (int i = 0; i < cb.Vertices.Length; i++)
+                    {
+                        verts.Add(cb.Vertices[i]);
+                        normals.Add(i < n.Length ? (float3)n[i] : float3.zero);
+                        Vector4 uv = cb.UVs != null && i < cb.UVs.Length ? cb.UVs[i] : Vector4.zero;
+                        uvs.Add(new float2(uv.x, uv.y));
+                    }
+                    indices.AddRange(cb.Indices);
+                }
+                flags[kv.Key] = f;
+            }
+
+            if (scratch != null)
+            {
+                if (Application.isPlaying) Destroy(scratch);
+                else DestroyImmediate(scratch);
+            }
+
+            return new CustomBlockTables
+            {
+                Flags = flags,
+                MeshRanges = ranges,
+                Vertices = ToNative(verts),
+                Normals = ToNative(normals),
+                UVs = ToNative(uvs),
+                Indices = ToNative(indices),
+            };
+        }
+
+        private static NativeArray<T> ToNative<T>(List<T> list) where T : struct
+        {
+            // Never empty, so the job always has a valid array to read
+            var arr = new NativeArray<T>(Math.Max(1, list.Count), Allocator.Persistent);
+            for (int i = 0; i < list.Count; i++)
+                arr[i] = list[i];
+            return arr;
+        }
+
+        // Writes from chunk processors into positions that had no chunk yet, applied when one is filled there
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<(int x, int y, int z),
+            System.Collections.Concurrent.ConcurrentQueue<(int index, byte state, byte value)>> _pendingWrites = new();
+
+        /// <summary>
+        /// Sets a voxel's state and value in the chunk at <paramref name="chunkPos"/> on behalf of a chunk processor
+        /// working on a neighbour (trees reaching over a border). Safe from any thread. A write for a chunk not filled
+        /// yet, or not created yet (infinite volumes), is kept until it is, instead of being lost to the generator.
+        /// </summary>
+        public void WriteVoxelFromNeighbour((int x, int y, int z) chunkPos, int index, byte state, byte value)
+        {
+            Chunk c = GetChunk(chunkPos);
+            if (!ReferenceEquals(c, null))
+            {
+                c.WriteVoxelFromNeighbour(index, state, value);
+                return;
+            }
+            if (!IsInfinite)
+                return;
+            _pendingWrites.GetOrAdd(chunkPos, _ => new System.Collections.Concurrent.ConcurrentQueue<(int, byte, byte)>())
+                .Enqueue((index, state, value));
+        }
+
+        // Called by a chunk as soon as its voxels are filled
+        internal void ApplyPendingWrites((int x, int y, int z) chunkPos, Voxel[] voxels, ref bool hasData)
+        {
+            if (_pendingWrites.IsEmpty || !_pendingWrites.TryRemove(chunkPos, out var writes))
+                return;
+            while (writes.TryDequeue(out var w))
+            {
+                voxels[w.index].State = w.state;
+                voxels[w.index].Value = w.value;
+                if (w.state != 0) hasData = true;
+            }
+        }
+
+        // Drops held writes for positions well out of range: by the time one comes back, the chunk that wrote them
+        // will have been regenerated and will write them again
+        private void PrunePendingWrites()
+        {
+            if (_pendingWrites.IsEmpty)
+                return;
+            int limit = (InfiniteChunkRadius + 2) * (InfiniteChunkRadius + 2);
+            foreach (var key in _pendingWrites.Keys)
+                if (FocusDistance(key) > limit)
+                    _pendingWrites.TryRemove(key, out _);
+        }
+
+        /// <summary>Whether a chunk is queued to be created at this position.</summary>
+        internal bool IsCreatePending((int x, int y, int z) pos) => _createPending.Contains(pos);
+
+        private void QueueCreate((int x, int y, int z) pos)
+        {
+            if (_createPending.Add(pos))
+            {
+                _createQueue.Add(pos);
+                _createQueueDirty = true;
+            }
+        }
+
+        private bool InCreateRange((int x, int y, int z) p)
+        {
+            if ((InfiniteChunkBounds.x > 0 && (p.x < -InfiniteChunkBounds.x || p.x > InfiniteChunkBounds.x)) ||
+                (InfiniteChunkBounds.y > 0 && (p.y < -InfiniteChunkBounds.y || p.y > InfiniteChunkBounds.y)) ||
+                (InfiniteChunkBounds.z > 0 && (p.z < -InfiniteChunkBounds.z || p.z > InfiniteChunkBounds.z)))
+                return false;
+            return FocusDistance(p) <= InfiniteChunkRadius * InfiniteChunkRadius;
+        }
+
+        // Creates (or recycles) queued chunks, nearest first, until this frame's budget is spent (at least one).
+        // Creating every chunk in range in one frame cost hundreds of ms on the first pass.
+        private void ProcessCreateQueue()
+        {
+            if (_createQueue.Count == 0)
+                return;
+            if (_createQueueDirty || _createQueueSortedFor != _focusChunk)
+            {
+                // Farthest first, so the nearest is at the end
+                _farthestFirst ??= (a, b) => FocusDistance(b).CompareTo(FocusDistance(a));
+                _createQueue.Sort(_farthestFirst);
+                _createQueueDirty = false;
+                _createQueueSortedFor = _focusChunk;
+            }
+
+            _budgetWatch.Restart();
+            int created = 0;
+            while (_createQueue.Count > 0)
+            {
+                if (created > 0 && _budgetWatch.Elapsed.TotalMilliseconds >= ChunkCreateBudgetMs)
+                    break;
+                (int x, int y, int z) pos = _createQueue[_createQueue.Count - 1];
+                _createQueue.RemoveAt(_createQueue.Count - 1);
+                _createPending.Remove(pos);
+                if (Chunks.ContainsKey(pos) || !InCreateRange(pos))
+                    continue;
+
+                if (_freeChunks.TryDequeue(out Chunk reuse))
+                {
+                    _freeSet.Remove(reuse);
+                    reuse.Initialize(pos, this);
+                    lock (_chunksLock)
+                        Chunks.Add(pos, reuse);
+                }
+                else
+                {
+                    Chunk newChunk = Instantiate(ChunkPrefab, transform, false).GetComponent<Chunk>();
+                    newChunk.Initialize(pos, this);
+                    lock (_chunksLock)
+                        Chunks[pos] = newChunk;
+                }
+                created++;
+                PicaVoxelStats.ChunksPlaced++;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            foreach (MeshJobContext ctx in _meshContexts)
+                ctx.Dispose();
+            _meshContexts.Clear();
+            _freeMeshContexts.Clear();
+            _immediateMeshContext = null;
+            _busyMeshContexts = 0;
+            BlockTables.Dispose();
+            BlockTables = default;
+            _blockTablesCount = -1;
+        }
+
+        /////////////////////////////////////////////////////////////////
 
         private void GenerateFiniteChunks()
         {

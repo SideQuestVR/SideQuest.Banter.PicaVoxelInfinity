@@ -29,7 +29,8 @@ namespace PicaVoxel
         {
             List<(int x, int y, int z)> trees = new List<(int x, int y, int z)>();
 
-            Chunk upchunk = volume.GetChunk((chunk.Position.x, chunk.Position.y + 1, chunk.Position.z));
+            int cs = volume.ChunkSize;
+            Voxel above = default;
 
             for (int z = 0; z < volume.ChunkSize; z++)
                 for (int x = 0; x < volume.ChunkSize; x++)
@@ -39,14 +40,12 @@ namespace PicaVoxel
                         {
                             if (y == volume.ChunkSize-1)
                             {
-                                if (upchunk != null)
-                                {
-                                    if (upchunk.Voxels[x + volume.ChunkSize * (0 + volume.ChunkSize * z)].State == 0)
-                                    {
-                                        trees.Add((x, y, z));
-                                    }
-                                }
-                                else
+                                // The voxel above is in the chunk overhead, which may not have generated yet (it read as
+                                // air, growing a crown part way up the trunk), so ask the generator what's there
+                                above = default;
+                                volume.GenerateVoxel(x + cs * chunk.Position.x, cs * (chunk.Position.y + 1),
+                                    z + cs * chunk.Position.z, ref above);
+                                if (above.State == 0)
                                 {
                                     trees.Add((x, y, z));
                                 }
@@ -61,12 +60,6 @@ namespace PicaVoxel
             if (trees.Count == 0)
                 return true;
             
-            Chunk[] _neighbours = new Chunk[27];
-            for(int x=0;x<3;x++)
-                for(int y=0;y<3;y++)
-                    for(int z=0;z<3;z++)
-                        _neighbours[x + 3 * (y + 3 * z)] = volume.GetChunk((chunk.Position.x+(x-1),chunk.Position.y+(y-1),chunk.Position.z+(z-1)));
-
             foreach ((int x, int y, int z) tree in trees)
             {
                 int x = tree.x;
@@ -114,12 +107,6 @@ namespace PicaVoxel
                                 x -= volume.ChunkSize;
                             }
 
-                            if (_neighbours[nx + 3 * (ny + 3 * nz)] == null)
-                            {
-                                nx = 1;
-                                continue;
-                            }
-
                             if (yy<0 && xx == 0 && zz == 0)
                             {
                                 nx = 1;
@@ -132,8 +119,20 @@ namespace PicaVoxel
                                 continue;
                             }
 
-                            _neighbours[nx + 3 * (ny + 3 * nz)].Voxels[x + volume.ChunkSize * (y + volume.ChunkSize * z)].State = 2; // 2=Custom block/transparent
-                            _neighbours[nx + 3 * (ny + 3 * nz)].Voxels[x + volume.ChunkSize * (y + volume.ChunkSize * z)].Value = (byte)TreeLeavesValue;
+                            int index = x + volume.ChunkSize * (y + volume.ChunkSize * z);
+                            if (nx == 1 && ny == 1 && nz == 1)
+                            {
+                                chunk.Voxels[index].State = 2; // 2=Custom block/transparent
+                                chunk.Voxels[index].Value = (byte)TreeLeavesValue;
+                            }
+                            else
+                            {
+                                // A neighbour may not be generated (or even created) yet; the volume holds the write
+                                // until it is, where writing straight into its voxels lost the leaves to its generator
+                                volume.WriteVoxelFromNeighbour(
+                                    (chunk.Position.x + nx - 1, chunk.Position.y + ny - 1, chunk.Position.z + nz - 1),
+                                    index, 2, (byte)TreeLeavesValue);
+                            }
 
                             nx = 1;
                         }
@@ -143,7 +142,7 @@ namespace PicaVoxel
 
                 }
             }
-            
+
             return true;
         }
     }
