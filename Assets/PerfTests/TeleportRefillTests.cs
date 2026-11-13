@@ -113,7 +113,7 @@ namespace PicaVoxelPerf
         {
             float unit = v.ChunkSize * v.VoxelSize;
             Vector3 c = (camPos - (v.transform.position - 0.5f * unit * Vector3.one)) / unit;
-            var cc = new Vector3Int(Mathf.RoundToInt(c.x), Mathf.RoundToInt(c.y), Mathf.RoundToInt(c.z));
+            var cc = new Vector3Int(Mathf.FloorToInt(c.x), Mathf.FloorToInt(c.y), Mathf.FloorToInt(c.z));
             int r = v.InfiniteChunkRadius, cs = v.ChunkSize;
             var problems = new List<string>();
             var verts = new List<Vector3>(); var uvs = new List<Vector4>(); var colors = new List<Color32>(); var idx = new List<int>();

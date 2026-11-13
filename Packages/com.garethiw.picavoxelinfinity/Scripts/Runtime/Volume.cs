@@ -196,6 +196,9 @@ namespace PicaVoxel
         private readonly System.Diagnostics.Stopwatch _budgetWatch = new();
         private Vector3Int _focusChunk;
 
+        /// <summary>The chunk the camera is in, as last worked out (infinite volumes).</summary>
+        public Vector3Int CameraChunk => _focusChunk;
+
         // Positions waiting for a chunk, nearest last (they are taken from the end)
         private readonly List<(int x, int y, int z)> _createQueue = new();
         private readonly HashSet<(int x, int y, int z)> _createPending = new();
@@ -344,8 +347,8 @@ namespace PicaVoxel
                 Vector3 halfchunk = radunit * 0.5f * Vector3.one;
                 Vector3 camoffset = _cameraTransform.position - (transform.position - halfchunk);
                 Vector3 camChunkPos = camoffset / radunit;
-                Vector3Int ccpos = new Vector3Int(Mathf.RoundToInt(camChunkPos.x), Mathf.RoundToInt(camChunkPos.y),
-                    Mathf.RoundToInt(camChunkPos.z));
+                Vector3Int ccpos = new Vector3Int(Mathf.FloorToInt(camChunkPos.x), Mathf.FloorToInt(camChunkPos.y),
+                    Mathf.FloorToInt(camChunkPos.z));
 
 
                 //Debug.Log(ccpos);
@@ -508,7 +511,10 @@ namespace PicaVoxel
             float radunit = ChunkSize * VoxelSize;
             Vector3 camoffset = _cameraTransform.position - (transform.position - radunit * 0.5f * Vector3.one);
             Vector3 c = camoffset / radunit;
-            _focusChunk = new Vector3Int(Mathf.RoundToInt(c.x), Mathf.RoundToInt(c.y), Mathf.RoundToInt(c.z));
+            // The chunk the camera is IN. (camoffset runs from the corner of chunk 0's cell, so floor, not round: rounding
+            // named the next chunk along whenever the camera was in the far half of its own, which put the middle of
+            // the loaded area, and the start of cave culling, one chunk out)
+            _focusChunk = new Vector3Int(Mathf.FloorToInt(c.x), Mathf.FloorToInt(c.y), Mathf.FloorToInt(c.z));
         }
 
         private int FocusDistance((int x, int y, int z) p)

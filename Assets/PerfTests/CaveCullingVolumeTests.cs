@@ -26,7 +26,7 @@ namespace PicaVoxelPerf
         // The centre of voxel (gx, gy, gz) (volume-wide voxel coordinates, as the generator uses them) in the world
         static Vector3 ToWorld(int gx, int gy, int gz) => new Vector3(gx - 7.5f, gy - 7.5f, gz - 7.5f);
 
-        IEnumerator Setup(ShadowCastingMode shadows = ShadowCastingMode.Off, int radius = 8)
+        IEnumerator Setup(ShadowCastingMode shadows = ShadowCastingMode.Off, int radius = 8, bool solid = false)
         {
             // Earlier tests can leave a scene loaded: this volume must follow this test's camera
             foreach (var c in Object.FindObjectsByType<Camera>(FindObjectsSortMode.None)) c.gameObject.SetActive(false);
@@ -55,8 +55,13 @@ namespace PicaVoxelPerf
             _volume.ChunkLayer = 0;
             _volume.CastShadows = shadows;
             go.AddComponent<NullPersister>();
-            _gen = go.AddComponent<LandscapeGenerator>();
-            _gen.Trees = false;
+            if (solid)
+                go.AddComponent<InfiniteSolidGenerator>();   // rock all the way: nothing is open until it's dug
+            else
+            {
+                _gen = go.AddComponent<LandscapeGenerator>();
+                _gen.Trees = false;
+            }
             go.SetActive(true);
             yield return null;
         }
@@ -200,7 +205,7 @@ namespace PicaVoxelPerf
             _cam.position = ToWorld(cave.x, cave.y, cave.z);
             yield return Wait(4f);
             yield return WaitForLoad();
-            var inChunk = _volume.GetChunk((Mathf.RoundToInt(cave.x / 16f), Mathf.RoundToInt(cave.y / 16f), Mathf.RoundToInt(cave.z / 16f)));
+            var inChunk = _volume.GetChunk((Mathf.FloorToInt(cave.x / 16f), Mathf.FloorToInt(cave.y / 16f), Mathf.FloorToInt(cave.z / 16f)));
             Assert.IsNotNull(inChunk, "the chunk the camera is in");
             Assert.IsFalse(inChunk.CaveCulled, "the camera's own chunk");
             AssertRaysOnlyHitDrawnChunks($"in a cave at {cave}");
@@ -246,6 +251,85 @@ namespace PicaVoxelPerf
             Debug.Log($"[CaveCullingVolume] dug a shaft from {ground} to -20 at ({tx},{tz}): chunk {target.Position} culled={target.CaveCulled}");
             Assert.IsFalse(target.CaveCulled, "the chunk at the bottom of the shaft is drawn once there is a way down to it");
             AssertRaysOnlyHitDrawnChunks("after digging");
+        }
+
+        // The chunk whose cell contains the world position (found from where the chunks really are)
+        Chunk ChunkContaining(Vector3 p)
+        {
+            foreach (var c in _volume.Chunks.Values)
+            {
+                var o = c.transform.position;
+                if (p.x >= o.x && p.x < o.x + 16f && p.y >= o.y && p.y < o.y + 16f && p.z >= o.z && p.z < o.z + 16f) return c;
+            }
+            return null;
+        }
+
+        // The "camera chunk" streaming and cave culling start from must be the chunk the camera is in, in every half of
+        // every chunk (it named the next chunk along in the far half, which broke cave culling from inside a tunnel)
+        [UnityTest]
+        public IEnumerator CameraChunkIsTheChunkTheCameraIsIn()
+        {
+            yield return Setup(radius: 4, solid: true);
+            yield return WaitForLoad();
+            int checkedCount = 0;
+            foreach (float x in new[] { -17f, -8.01f, -7.99f, -0.1f, 0f, 0.1f, 7.9f, 8.1f, 15.9f, 24.5f })
+            foreach (float y in new[] { -9f, -0.5f, 0.5f, 7.5f })
+            foreach (float z in new[] { -12f, -0.1f, 3f, 8.5f })
+            {
+                _cam.position = new Vector3(x, y, z);
+                yield return null;
+                yield return null;
+                var inside = ChunkContaining(_cam.position);
+                if (inside == null) continue;   // (not loaded)
+                checkedCount++;
+                Assert.AreEqual(new Vector3Int(inside.Position.x, inside.Position.y, inside.Position.z), _volume.CameraChunk,
+                    $"camera at {_cam.position} is in chunk {inside.Position}");
+            }
+            Assert.Greater(checkedCount, 100, "positions checked");
+        }
+
+        // Digging along a tunnel through solid rock, as in the report: whichever half of the chunk the camera is in, the
+        // chunks round it, ahead and behind along the tunnel, are drawn
+        [UnityTest]
+        public IEnumerator InATunnelThroughRockTheChunksAroundYouAreDrawn()
+        {
+            yield return Setup(radius: 4, solid: true);
+            yield return WaitForLoad();
+            // Two tunnels along x, crossing several chunks: one in the upper halves of y and z, one in the lower
+            foreach (var (ty, tz) in new[] { (0.5f, 0.5f), (-3.5f, -3.5f) })
+                for (float x = -23.5f; x < 40f; x += 1f)
+                    for (float dy = 0f; dy < 4f; dy += 1f)   // (head height: the camera rises and falls in it with a jump or a crouch)
+                        _volume.SetVoxelAtWorldPosition(new Vector3(x, ty + dy, tz), default, out _, out _);
+            yield return Wait(2.5f);
+
+            int positions = 0;
+            foreach (var (ty, tz) in new[] { (0.5f, 0.5f), (-3.5f, -3.5f) })
+            foreach (float x in new[] { -17.5f, -12.5f, -8.5f, -0.5f, 0.5f, 3.5f, 7.5f, 8.5f, 15.5f, 20.5f, 23.5f, 24.5f, 31.5f })
+            foreach (float eye in new[] { 0.25f, 1.5f, 3.25f })   // crouched, standing, jumping
+            {
+                _cam.position = new Vector3(x, ty + eye, tz);
+                yield return Wait(0.8f);
+                var here = ChunkContaining(_cam.position);
+                Assert.IsNotNull(here, $"chunk at {_cam.position}");
+                positions++;
+                Assert.IsFalse(here.CaveCulled, $"camera at {_cam.position}: its own chunk {here.Position}");
+                // The six chunks next to it are always kept (the camera is in the tunnel's open space: look any way)
+                foreach (var (dx, dy, dz) in new[] { (1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1) })
+                {
+                    var next = _volume.GetChunk((here.Position.x + dx, here.Position.y + dy, here.Position.z + dz));
+                    if (next != null)
+                        Assert.IsFalse(next.CaveCulled, $"camera at {_cam.position} in chunk {here.Position}: neighbour {next.Position} is culled");
+                }
+                // ...and so are the chunks the tunnel runs through, two along each way (the tunnel joins their sides)
+                for (int dx = -2; dx <= 2; dx++)
+                {
+                    var along = _volume.GetChunk((here.Position.x + dx, here.Position.y, here.Position.z));
+                    if (along == null || along.Position.x < -1 || along.Position.x > 1) continue;   // (the tunnel runs through chunks -1 to 1 whole)
+                    Assert.IsFalse(along.CaveCulled, $"camera at {_cam.position}: tunnel chunk {along.Position} is culled");
+                }
+                AssertRaysOnlyHitDrawnChunks($"in the tunnel at {_cam.position}", 1200);
+            }
+            Debug.Log($"[CaveCullingVolume] tunnel: {positions} camera positions, every chunk round them drawn; {_volume.CulledChunkCount} of {_volume.Chunks.Count} chunks culled");
         }
 
         [UnityTest]
