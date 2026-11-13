@@ -63,7 +63,9 @@ namespace PicaVoxelPerf
                 new CustomBlock { VoxelValue = 9 }, // opaque custom without a mesh: a two-sided cube in pass 0
                 new CustomBlock { VoxelValue = 12, HasTransparency = true },
                 // Water (not in the random fills, which the managed mesher must match: it doesn't know these options)
-                new CustomBlock { VoxelValue = 16, HasTransparency = true, HideFacesAgainstSame = true, NoCollision = true },
+                new CustomBlock { VoxelValue = 16, HasTransparency = true, HideFacesAgainstSame = true },
+                // ...and a block with no collision at all
+                new CustomBlock { VoxelValue = 17, HasTransparency = true, HideFacesAgainstSame = true, NoCollision = true },
             };
             go.AddComponent<NullPersister>();
             go.SetActive(true);
@@ -198,9 +200,10 @@ namespace PicaVoxelPerf
         }
 
         // A lake: a block of water draws only its outside (both ways, so it shows from under the surface too), not
-        // the faces between its own blocks, and leaves nothing in the collision mesh; the lake bed still collides
+        // the faces between its own blocks, and only that outside collides. A No Collision block leaves nothing in
+        // the collision mesh, while the lake bed under it still collides.
         [UnityTest]
-        public IEnumerator WaterDrawsOnlyItsOutsideAndDoesNotCollide()
+        public IEnumerator WaterDrawsAndCollidesOnlyOnItsOutside()
         {
             var tables = Volume.BuildBlockTables(_volume.CustomBlocksDict);
             var ctx = new MeshJobContext(CS);
@@ -219,9 +222,18 @@ namespace PicaVoxelPerf
                     if (Mathf.RoundToInt(ctx.Vertices[i].UV.z) == 16) waterQuads++;
                 // A 6 x 4 x 6 block: 2 * (6*4 + 6*6 + 4*6) = 168 outside faces, each drawn both ways
                 Assert.AreEqual(336, waterQuads, "water faces");
-                Assert.AreEqual(0, ctx.CollisionIndices.Length, "water collides");
+                // Its collision is its outside: six merged rectangles (each face both ways), 2 triangles each
+                Assert.AreEqual(6 * 2 * 2 * 3, ctx.CollisionIndices.Length, "water's collision indices");
 
-                // On a stone floor: the floor collides, the water's underside is hidden by it
+                // The same block with No Collision: drawn the same, nothing to collide with
+                for (int z = 4; z < 10; z++) for (int y = 5; y < 9; y++) for (int x = 3; x < 9; x++)
+                    centre.Voxels[x + CS * (y + CS * z)].Value = 17;
+                ctx.Pin(Neighbours());
+                Job(ctx, tables, 0.7f, true).Run();
+                ctx.Complete();
+                Assert.AreEqual(0, ctx.CollisionIndices.Length, "a No Collision block collides");
+
+                // On a stone floor: the floor collides, the block's underside is hidden by it
                 for (int z = 4; z < 10; z++) for (int x = 3; x < 9; x++)
                     centre.Voxels[x + CS * (4 + CS * z)] = new Voxel { State = 1, Value = 2, Color = new Color32(255, 255, 255, 255) };
                 ctx.Pin(Neighbours());
@@ -229,8 +241,8 @@ namespace PicaVoxelPerf
                 ctx.Complete();
                 waterQuads = 0;
                 for (int i = 0; i < ctx.Vertices.Length; i += 4)
-                    if (Mathf.RoundToInt(ctx.Vertices[i].UV.z) == 16) waterQuads++;
-                Assert.AreEqual(336 - 72, waterQuads, "water faces over a floor");
+                    if (Mathf.RoundToInt(ctx.Vertices[i].UV.z) == 17) waterQuads++;
+                Assert.AreEqual(336 - 72, waterQuads, "faces over a floor");
                 Assert.Greater(ctx.CollisionIndices.Length, 0, "the floor collides");
             }
             finally

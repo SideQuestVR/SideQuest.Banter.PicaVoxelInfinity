@@ -50,7 +50,7 @@ namespace PicaVoxel
         public Mesh Mesh;
         [Tooltip("Culled meshing: no faces between two of these blocks side by side (water, so only a lake's outside is drawn)")]
         public bool HideFacesAgainstSame;
-        [Tooltip("Culled meshing: no collision (things pass through it, like water)")]
+        [Tooltip("Culled meshing: no collision (things pass through it; but the manipulator can't select it or build against it either)")]
         public bool NoCollision;
     }
 

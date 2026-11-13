@@ -17,8 +17,8 @@ namespace PicaVoxel
     /// cavern, a bedrock floor, and trees spread through forested areas. TreeProcessor adds the leaves.
     ///
     /// The sand, snow and water values match the "landscape" tile sheet (Textures/minecrafttiles-pv-landscape).
-    /// Water wants a custom block on the Volume with Has Transparency, Hide Faces Against Same and No Collision, and
-    /// the tile array terrain shader's Water Block Value set to it.
+    /// Water wants a custom block on the Volume with Has Transparency and Hide Faces Against Same, and the tile array
+    /// terrain shader's Water Block Value set to it.
     ///
     /// Thread safe and deterministic (chunks generate on several threads). Heights are worked out every 4 columns and
     /// the caves every 4 blocks, blended between (as Minecraft does), so a chunk costs a few hundred noise lookups

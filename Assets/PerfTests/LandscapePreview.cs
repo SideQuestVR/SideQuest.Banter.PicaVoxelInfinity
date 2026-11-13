@@ -138,7 +138,7 @@ namespace PicaVoxelPerf
             volume.CustomBlocks = new[]
             {
                 new CustomBlock { VoxelValue = 12, HasTransparency = true },
-                new CustomBlock { VoxelValue = 16, HasTransparency = true, HideFacesAgainstSame = true, NoCollision = true },
+                new CustomBlock { VoxelValue = 16, HasTransparency = true, HideFacesAgainstSame = true },
             };
             var gen = go.AddComponent<LandscapeGenerator>();
             var trees = go.AddComponent<TreeProcessor>();
