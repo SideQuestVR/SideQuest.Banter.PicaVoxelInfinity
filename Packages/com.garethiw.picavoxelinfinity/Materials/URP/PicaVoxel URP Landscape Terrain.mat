@@ -39,6 +39,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _CustomUVColumns: 14
+    - _CustomUVPadding: 1
     - _Cutoff: 0.5
     - _DistanceFalloff: 10
     - _DrawDistance: 140

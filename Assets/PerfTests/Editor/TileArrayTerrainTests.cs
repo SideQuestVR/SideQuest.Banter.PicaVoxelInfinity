@@ -97,6 +97,49 @@ namespace PicaVoxelPerf
             Assert.Less(differ, n / 200, "close-up pixels that changed");
         }
 
+        // A custom block mesh (UVs made for the original 14-column sheet) looks the same drawn from that sheet as through
+        // the wider landscape sheet's array, told which layout its UVs were made for
+        [Test]
+        public void CustomMeshUVsMapOntoAWiderSheetsArray()
+        {
+            var scene = new TestScene(this, withTerrain: false);
+            var quadGo = Keep(new GameObject("Custom Mesh"));
+            var mesh = Keep(new Mesh());
+            // The wedge's tile (column 5) on row 3, inset by the padding texel, as the custom block meshes are
+            float u0 = 5f / 14f + 1f / 252f, u1 = 6f / 14f - 1f / 252f, v0 = 3f / 6f + 1f / 108f, v1 = 4f / 6f - 1f / 108f;
+            mesh.SetVertices(new List<Vector3> { new(-1, -1, 0), new(-1, 1, 0), new(1, 1, 0), new(1, -1, 0) });
+            mesh.SetNormals(new List<Vector3> { Vector3.back, Vector3.back, Vector3.back, Vector3.back });
+            mesh.SetUVs(0, new List<Vector4> { new(u0, v0, 5, -1), new(u0, v1, 5, -1), new(u1, v1, 5, -1), new(u1, v0, 5, -1) });
+            mesh.SetColors(new List<Color32> { new(255, 255, 255, 255), new(255, 255, 255, 255), new(255, 255, 255, 255), new(255, 255, 255, 255) });
+            mesh.SetTriangles(new[] { 0, 1, 2, 0, 2, 3 }, 0);
+            quadGo.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var r = quadGo.AddComponent<MeshRenderer>();
+            scene.Camera.transform.SetPositionAndRotation(new Vector3(0, 0, -1.6f), Quaternion.identity);
+
+            r.sharedMaterial = scene.ArrayMaterial(cubemap: null);   // custom meshes sample the original sheet
+            Color32[] sheet = scene.Render(null);
+
+            const string landscape = "Packages/com.garethiw.picavoxelinfinity/Textures/minecrafttiles-pv-landscape.png";
+            var wide = scene.ArrayMaterial(cubemap: null);
+            wide.SetTexture("_TileArray", Keep(TileArrayBuilder.Build(AssetDatabase.LoadAssetAtPath<Texture2D>(landscape),
+                new TileArrayBuilder.Settings { Columns = 17, Rows = 6, Padding = 1, AlphaCutoff = 0.5f, PreserveCoverage = true })));
+            wide.SetTexture("_TileSheet", AssetDatabase.LoadAssetAtPath<Texture2D>(landscape));
+            wide.SetVector("_NumTiles", new Vector4(17, 6));
+            wide.SetFloat("_CustomUVColumns", 14f);
+            wide.SetFloat("_CustomUVPadding", 1f);
+            r.sharedMaterial = wide;
+            Color32[] array = scene.Render(null);
+
+            int differ = 0, drawn = 0;
+            for (int i = 0; i < sheet.Length; i++)
+            {
+                if (Diff(sheet[i], array[i]) > 3) differ++;
+                if (sheet[i].a > 0) drawn++;
+            }
+            Debug.Log($"[TileArray] custom mesh: {differ} of {sheet.Length} pixels differ by more than 3/255");
+            Assert.Less(differ, sheet.Length / 100, "pixels that changed");
+        }
+
         [Test]
         public void DistantTerrainShimmersFarLess()
         {

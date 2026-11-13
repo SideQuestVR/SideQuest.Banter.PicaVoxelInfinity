@@ -17,6 +17,10 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain Tile Array"
         _Tint("Tint", Color) = (1,1,1,1)
         _Cutoff("Alpha Cutoff", Range(0,1)) = 0.5
 
+        [Header(Custom Block Meshes)]
+        _CustomUVColumns("Tile Sheet Columns Their UVs Were Made For (0: sample the Tile Sheet)", Float) = 0
+        _CustomUVPadding("...and its Padding (texels)", Float) = 1
+
         [Header(Water)]
         _WaterValue("Water Block Value (-1 for none)", Float) = -1
         _WaterOpacity("Water Opacity", Range(0,1)) = 0.6
@@ -53,6 +57,8 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain Tile Array"
         float _Cutoff;
         float _WaterValue;
         float _WaterOpacity;
+        float _CustomUVColumns;
+        float _CustomUVPadding;
         float _MipBias;
         float _DrawDistance;
         float _DistanceFalloff;
@@ -76,10 +82,23 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain Tile Array"
     // full-size tile, as the tile sheet shader shows it; further off it comes from the tile's mips.
     half4 SampleTile(float4 uv)
     {
+        float slice;
         if (uv.w < 0.0)
-            return SAMPLE_TEXTURE2D(_TileSheet, sampler_pv_point_clamp, uv.xy);
+        {
+            // A custom block mesh: its UVs are places on a tile sheet. Sampled straight from the sheet, unless the
+            // material says which sheet layout they were made for: then the tile and the place in it are worked out
+            // and the array is sampled, so the mesh can use a different (wider) sheet's array, with mips
+            if (_CustomUVColumns <= 0.0)
+                return SAMPLE_TEXTURE2D(_TileSheet, sampler_pv_point_clamp, uv.xy);
+            float2 cell = uv.xy * float2(_CustomUVColumns, _NumTiles.y);
+            float2 index = floor(cell);
+            float cellTexels = _TileArray_TexelSize.z + 2.0 * _CustomUVPadding;
+            uv.xy = saturate(((cell - index) * cellTexels - _CustomUVPadding) * _TileArray_TexelSize.xy);
+            slice = index.y * _NumTiles.x + index.x;
+        }
+        else
+            slice = floor(uv.w * _NumTiles.x + uv.z + 0.5);
 
-        float slice = floor(uv.w * _NumTiles.x + uv.z + 0.5);
         // Texels per pixel, from this face's own 0..1 UVs (continuous across the face, so no seams)
         float2 t = uv.xy * _TileArray_TexelSize.zw;
         float2 dx = ddx(t), dy = ddy(t);
