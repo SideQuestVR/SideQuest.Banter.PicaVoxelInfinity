@@ -48,6 +48,10 @@ namespace PicaVoxel
         public bool UseTargetOrientationWhenSameValue;
         public bool UseBoxColliderForCursor;
         public Mesh Mesh;
+        [Tooltip("Culled meshing: no faces between two of these blocks side by side (water, so only a lake's outside is drawn)")]
+        public bool HideFacesAgainstSame;
+        [Tooltip("Culled meshing: no collision (things pass through it, like water)")]
+        public bool NoCollision;
     }
 
     public class CustomBlockData
@@ -60,6 +64,8 @@ namespace PicaVoxel
         public bool AllowOrientation;
         public bool UseTargetOrientationWhenSameValue;
         public bool UseBoxColliderForCursor;
+        public bool HideFacesAgainstSame;
+        public bool NoCollision;
     }
 
     /// <summary>
@@ -258,6 +264,8 @@ namespace PicaVoxel
                 }
 
                 data.HasTransparency = cb.HasTransparency;
+                data.HideFacesAgainstSame = cb.HideFacesAgainstSame;
+                data.NoCollision = cb.NoCollision;
                 CustomBlocksDict.Add(cb.VoxelValue, data);
             }
         }
@@ -642,6 +650,8 @@ namespace PicaVoxel
                 byte f = CustomBlockTables.IsCustom;
                 if (cb.HasTransparency) f |= CustomBlockTables.Transparent;
                 if (cb.AllowOrientation) f |= CustomBlockTables.AllowOrientation;
+                if (cb.HideFacesAgainstSame) f |= CustomBlockTables.HideAgainstSame;
+                if (cb.NoCollision) f |= CustomBlockTables.NoCollision;
 
                 if (cb.HasMesh && cb.Vertices != null && cb.Indices != null)
                 {

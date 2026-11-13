@@ -33,3 +33,11 @@ It is separate from the existing shaders, materials and textures, which are unch
    - **Color**: one fade colour.
 
 **Smooth Between Mips** blends between mip levels at a distance (on by default); off, each distance uses the nearest mip, which is cheaper still but shows faint bands where the mip changes. **Mip Bias** moves the switch-over: positive goes soft sooner, negative stays sharp further out. `Assets/PerfTests/Editor` has the tests for all of this (Test Runner, EditMode).
+
+## Landscape generator
+
+**LandscapeGenerator** makes terrain with more going on than **TerrainGenerator**'s single layer of noise, along the lines of Minecraft's (much simplified): lowlands with lakes and sandy shores, rolling hills, mountain ranges with ridged peaks, bare rock on cliffs and snow on the summits, tunnels winding through the ground (now and then breaking out at the surface) and the odd cavern, a bedrock floor, and trees spread through forested areas (add a **TreeProcessor**, scheduled After Generation, for their leaves). Everything is under its Inspector headers: heights, how mountainous, rock and snow lines, tunnel width and caverns, forest cover. It costs about the same per chunk as TerrainGenerator: heights are worked out every 4 columns and caves every 4 blocks, blended between.
+
+Its sand, snow and water blocks (values 14, 15 and 16) are on **Textures/minecrafttiles-pv-landscape**, the original tile sheet with those three added (the original sheet is unchanged), with a tile array and the **Materials/URP/PicaVoxel URP Landscape Terrain** material made from it. For water, add a custom block to the Volume with its value and **Has Transparency**, **Hide Faces Against Same** (only a lake's outside is drawn, not the faces between its blocks) and **No Collision** (players walk into it, not on it). The tile array terrain shader draws the block set as its **Water Block Value** see-through, as a fine dither (so the terrain stays one opaque material), and casting no shadow.
+
+Switching an existing world to a new generator changes the land under any edits players have saved there, since saved edits are kept as changes to the generated terrain.

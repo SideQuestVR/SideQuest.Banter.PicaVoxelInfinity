@@ -6,6 +6,7 @@
 //
 // Mesh UVs as the PicaVoxel Culled mesher writes them: xy 0..1 across a face, z the tile column, w the tile row
 // (from the bottom of the sheet). w < 0 is a custom block mesh, whose xy are tile sheet UVs: those sample the sheet.
+// One block value can be water (_WaterValue): drawn see-through, as a fine dither, and casting no shadow.
 Shader "PicaVoxel/PicaVoxel URP Infinite Terrain Tile Array"
 {
     Properties
@@ -15,6 +16,10 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain Tile Array"
         _NumTiles("Num Tiles (columns, rows)", Vector) = (14,6,0,0)
         _Tint("Tint", Color) = (1,1,1,1)
         _Cutoff("Alpha Cutoff", Range(0,1)) = 0.5
+
+        [Header(Water)]
+        _WaterValue("Water Block Value (-1 for none)", Float) = -1
+        _WaterOpacity("Water Opacity", Range(0,1)) = 0.6
 
         [Header(Filtering)]
         [Toggle(_SMOOTH_MIPS)] _SmoothMips("Smooth Between Mips (sharp texels up close either way)", Float) = 1
@@ -46,10 +51,26 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain Tile Array"
         float4 _SkyTint;
         float4 _FadeColor;
         float _Cutoff;
+        float _WaterValue;
+        float _WaterOpacity;
         float _MipBias;
         float _DrawDistance;
         float _DistanceFalloff;
     CBUFFER_END
+
+    // The water block is see-through: drawn in a fine ordered dither with _WaterOpacity of its pixels, so it needs
+    // no transparent pass or sorting (the whole terrain stays one opaque material)
+    // 4x4 Bayer matrix, as 0..15
+    static const float kBayer4[16] = { 0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5 };
+
+    bool IsWater(float4 uv) { return uv.w >= 0.0 && abs(uv.z - _WaterValue) < 0.5; }
+
+    void ClipWater(float4 uv, float4 positionCS)
+    {
+        if (!IsWater(uv)) return;
+        uint2 p = (uint2)positionCS.xy & 3;
+        clip(_WaterOpacity - (kBayer4[p.y * 4 + p.x] + 0.5) / 16.0);
+    }
 
     // The tile's colour for this pixel. Up close (a texel covering a pixel or more) it is the nearest texel of the
     // full-size tile, as the tile sheet shader shows it; further off it comes from the tile's mips.
@@ -166,6 +187,7 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain Tile Array"
 
                 half4 texColor = SampleTile(input.uv);
                 clip(texColor.a - _Cutoff);
+                ClipWater(input.uv, input.positionCS);
 
                 half3 albedo = texColor.rgb * input.color.rgb * _Tint.rgb;
 
@@ -260,6 +282,8 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain Tile Array"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 clip(SampleTile(input.uv).a - _Cutoff);
+                // Water casts no shadow
+                clip(IsWater(input.uv) ? -1.0 : 1.0);
                 return 0;
             }
             ENDHLSL
@@ -310,8 +334,9 @@ Shader "PicaVoxel/PicaVoxel URP Infinite Terrain Tile Array"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                // (the same cut-out as the colour pass, mips included, so depth and colour agree)
+                // (the same cut-out as the colour pass, mips and the water's dither included, so depth and colour agree)
                 clip(SampleTile(input.uv).a - _Cutoff);
+                ClipWater(input.uv, input.positionCS);
                 return 0;
             }
             ENDHLSL

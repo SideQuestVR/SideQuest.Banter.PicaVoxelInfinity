@@ -52,6 +52,10 @@ namespace PicaVoxel
         public const byte HasMesh = 2;
         public const byte Transparent = 4;
         public const byte AllowOrientation = 8;
+        /// <summary>No faces against a neighbour of the same value (water)</summary>
+        public const byte HideAgainstSame = 16;
+        /// <summary>Left out of the collision mesh</summary>
+        public const byte NoCollision = 32;
 
         /// <summary>Per voxel value (256): the flags above.</summary>
         [ReadOnly] public NativeArray<byte> Flags;
@@ -175,10 +179,15 @@ namespace PicaVoxel
 
                     if (tpCube)
                     {
+                        bool hideSame = (flags & CustomBlockTables.HideAgainstSame) != 0;
                         // The inside of a transparent cube: each visible face again, wound the other way
                         for (int f = 0; f < 6; f++)
-                            if (FaceVisible(x, y, z, f))
+                            if (FaceVisible(x, y, z, f) && !(hideSame && SameNeighbour(x, y, z, f, v.Value)))
                                 Quad(x, y, z, f, v, !FrontWinding(f), true, ref min, ref max, mergeCollision);
+                        for (int f = 0; f < 6; f++)
+                            if (FaceVisible(x, y, z, f) && !(hideSame && SameNeighbour(x, y, z, f, v.Value)))
+                                Quad(x, y, z, f, v, FrontWinding(f), false, ref min, ref max, mergeCollision);
+                        continue;
                     }
 
                     for (int f = 0; f < 6; f++)
@@ -268,6 +277,22 @@ namespace PicaVoxel
 
         // A neighbour that shades a corner: any voxel in the "active" state, custom or not.
         bool Shades(int x, int y, int z) => Padded[Index(x, y, z)].State == 1;
+
+        // The neighbour across a face is the same block (for blocks that hide faces against their own kind)
+        bool SameNeighbour(int x, int y, int z, int side, byte value)
+        {
+            Voxel n;
+            switch (side)
+            {
+                case 0: n = Padded[Index(x, y, z - 1)]; break;
+                case 1: n = Padded[Index(x, y, z + 1)]; break;
+                case 2: n = Padded[Index(x + 1, y, z)]; break;
+                case 3: n = Padded[Index(x - 1, y, z)]; break;
+                case 4: n = Padded[Index(x, y + 1, z)]; break;
+                default: n = Padded[Index(x, y - 1, z)]; break;
+            }
+            return n.State == 1 && n.Value == value;
+        }
 
         bool FaceVisible(int x, int y, int z, int side)
         {
@@ -417,7 +442,7 @@ namespace PicaVoxel
             min = math.min(min, math.min(math.min(p0, p1), math.min(p2, p3)));
             max = math.max(max, math.max(math.max(p0, p1), math.max(p2, p3)));
 
-            if (!BuildCollision) return;
+            if (!BuildCollision || (Blocks.Flags[v.Value] & CustomBlockTables.NoCollision) != 0) return;
             if (mergeCollision)
             {
                 AxisCoords(side, x, y, z, out int plane, out int u, out int row);
@@ -475,14 +500,14 @@ namespace PicaVoxel
                 });
                 min = math.min(min, p);
                 max = math.max(max, p);
-                if (BuildCollision)
+                if (BuildCollision && (flags & CustomBlockTables.NoCollision) == 0)
                     CollisionVertices.Add(p);
             }
             for (int i = 0; i < range.w; i++)
             {
                 int tri = Blocks.Indices[range.z + i];
                 Indices.Add(start + tri);
-                if (BuildCollision)
+                if (BuildCollision && (flags & CustomBlockTables.NoCollision) == 0)
                     CollisionIndices.Add(cstart + tri);
             }
         }

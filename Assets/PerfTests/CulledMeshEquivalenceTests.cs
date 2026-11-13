@@ -62,6 +62,8 @@ namespace PicaVoxelPerf
                 new CustomBlock { VoxelValue = 7, HasTransparency = true },
                 new CustomBlock { VoxelValue = 9 }, // opaque custom without a mesh: a two-sided cube in pass 0
                 new CustomBlock { VoxelValue = 12, HasTransparency = true },
+                // Water (not in the random fills, which the managed mesher must match: it doesn't know these options)
+                new CustomBlock { VoxelValue = 16, HasTransparency = true, HideFacesAgainstSame = true, NoCollision = true },
             };
             go.AddComponent<NullPersister>();
             go.SetActive(true);
@@ -193,6 +195,50 @@ namespace PicaVoxelPerf
                 ctx.Dispose();
                 tables.Dispose();
             }
+        }
+
+        // A lake: a block of water draws only its outside (both ways, so it shows from under the surface too), not
+        // the faces between its own blocks, and leaves nothing in the collision mesh; the lake bed still collides
+        [UnityTest]
+        public IEnumerator WaterDrawsOnlyItsOutsideAndDoesNotCollide()
+        {
+            var tables = Volume.BuildBlockTables(_volume.CustomBlocksDict);
+            var ctx = new MeshJobContext(CS);
+            try
+            {
+                MakeChunks(1, 0f, false);   // all air
+                Chunk centre = _chunks[(0, 0, 0)];
+                for (int z = 4; z < 10; z++) for (int y = 5; y < 9; y++) for (int x = 3; x < 9; x++)
+                    centre.Voxels[x + CS * (y + CS * z)] = new Voxel { State = 1, Value = 16, Color = new Color32(255, 255, 255, 255) };
+
+                ctx.Pin(Neighbours());
+                Job(ctx, tables, 0.7f, true).Run();
+                ctx.Complete();
+                int waterQuads = 0;
+                for (int i = 0; i < ctx.Vertices.Length; i += 4)
+                    if (Mathf.RoundToInt(ctx.Vertices[i].UV.z) == 16) waterQuads++;
+                // A 6 x 4 x 6 block: 2 * (6*4 + 6*6 + 4*6) = 168 outside faces, each drawn both ways
+                Assert.AreEqual(336, waterQuads, "water faces");
+                Assert.AreEqual(0, ctx.CollisionIndices.Length, "water collides");
+
+                // On a stone floor: the floor collides, the water's underside is hidden by it
+                for (int z = 4; z < 10; z++) for (int x = 3; x < 9; x++)
+                    centre.Voxels[x + CS * (4 + CS * z)] = new Voxel { State = 1, Value = 2, Color = new Color32(255, 255, 255, 255) };
+                ctx.Pin(Neighbours());
+                Job(ctx, tables, 0.7f, true).Run();
+                ctx.Complete();
+                waterQuads = 0;
+                for (int i = 0; i < ctx.Vertices.Length; i += 4)
+                    if (Mathf.RoundToInt(ctx.Vertices[i].UV.z) == 16) waterQuads++;
+                Assert.AreEqual(336 - 72, waterQuads, "water faces over a floor");
+                Assert.Greater(ctx.CollisionIndices.Length, 0, "the floor collides");
+            }
+            finally
+            {
+                ctx.Dispose();
+                tables.Dispose();
+            }
+            yield return null;
         }
 
         [UnityTest]
