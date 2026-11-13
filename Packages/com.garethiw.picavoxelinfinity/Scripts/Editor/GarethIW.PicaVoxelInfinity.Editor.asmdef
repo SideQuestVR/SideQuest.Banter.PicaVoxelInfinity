@@ -1,0 +1,18 @@
+{
+    "name": "GarethIW.PicaVoxelInfinity.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GarethIW.PicaVoxelInfinity"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

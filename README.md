@@ -18,3 +18,18 @@ Volumes start work nearest the camera first, within limits you can tune under **
 - **Periodic Remesh**: re-mesh the outer ring of chunks every pass, as older versions did. Off by default; it only costs time now.
 
 Chunk processors that write into neighbouring chunks should use `Volume.WriteVoxelFromNeighbour`, which holds the write until that chunk has generated rather than having the generator overwrite it. `PicaVoxelStats` counts the work volumes do, and `Assets/PerfTests` has a benchmark and equivalence tests (run them from the Test Runner, PlayMode).
+
+## Tile array terrain (no shimmer at a distance)
+
+The tile sheet terrain shaders can't use mipmaps (lower mips of a padded sheet bleed between tiles), so distant terrain shimmers, especially on Quest. **PicaVoxel URP Infinite Terrain Tile Array** samples a `Texture2DArray` instead: one slice per tile, with its own mips. Texels stay pixel-sharp up close (nearest texel of the full-size tile, exactly as the tile sheet shader shows them), and distant terrain is filtered. In a test of terrain moving under the camera, frame-to-frame shimmer dropped by about three quarters. It is opaque with alpha cut-out, and at the draw distance it fades into the sky's colour in that direction rather than going transparent, so the edge of the world meets the skybox.
+
+It is separate from the existing shaders, materials and textures, which are unchanged. To use it:
+
+1. **Tools > PicaVoxel > Tile Array Builder**: pick your tile sheet terrain material (it reads the sheet, columns, rows and padding from it) and build. The sheet is only read. Cut-out tiles (leaves) keep the same share of solid texels in every mip, so they don't thin out at a distance.
+2. Make a material with the **PicaVoxel/PicaVoxel URP Infinite Terrain Tile Array** shader (or copy *Materials/URP/PicaVoxel URP Tile Array Terrain*, made from the included tile sheet). Set the tile array, the tile sheet (custom block meshes still sample it) and the number of tiles, and assign it to the Volume.
+3. Choose where the fade takes the sky's colour from:
+   - **Cubemap**: exactly what the skybox shows. Build one with **Tools > PicaVoxel > Skybox Cubemap Builder** from the skybox material (6-sided, cubemap, panoramic or procedural all work); it renders the sky the way the game's camera does.
+   - **Reflection**: the scene's reflection probe (the default; it follows the skybox if the environment reflections come from it, but softer).
+   - **Color**: one fade colour.
+
+**Smooth Between Mips** blends between mip levels at a distance (on by default); off, each distance uses the nearest mip, which is cheaper still but shows faint bands where the mip changes. **Mip Bias** moves the switch-over: positive goes soft sooner, negative stays sharp further out. `Assets/PerfTests/Editor` has the tests for all of this (Test Runner, EditMode).
