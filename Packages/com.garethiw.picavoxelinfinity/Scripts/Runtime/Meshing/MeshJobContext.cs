@@ -31,6 +31,9 @@ namespace PicaVoxel
         public NativeList<float3> CollisionVertices;
         public NativeList<int> CollisionIndices;
         public NativeArray<float3> Bounds;
+        public NativeArray<int> Connectivity;
+        public NativeArray<byte> OpenScratch;
+        public NativeArray<int> FillStack;
 
         public JobHandle Handle;
         public bool Scheduled;
@@ -53,6 +56,10 @@ namespace PicaVoxel
             CollisionVertices = new NativeList<float3>(1024, Allocator.Persistent);
             CollisionIndices = new NativeList<int>(1536, Allocator.Persistent);
             Bounds = new NativeArray<float3>(2, Allocator.Persistent);
+            Connectivity = new NativeArray<int>(1, Allocator.Persistent);
+            int voxels = chunkSize * chunkSize * chunkSize;
+            OpenScratch = new NativeArray<byte>(voxels, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            FillStack = new NativeArray<int>(voxels, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
         }
 
         /// <summary>
@@ -85,7 +92,7 @@ namespace PicaVoxel
             }
         }
 
-        public CulledMeshJob CreateJob(Volume volume, bool collision)
+        public CulledMeshJob CreateJob(Volume volume, bool collision, bool floorSolid = false)
         {
             return new CulledMeshJob
             {
@@ -94,6 +101,7 @@ namespace PicaVoxel
                 SelfShadeIntensity = volume.SelfShadingIntensity,
                 BuildCollision = collision,
                 MergeCollision = volume.MergeColliderFaces,
+                FloorSolid = floorSolid,
                 Neighbours = Neighbours,
                 Blocks = volume.BlockTables,
                 Padded = Padded,
@@ -104,6 +112,9 @@ namespace PicaVoxel
                 CollisionVertices = CollisionVertices,
                 CollisionIndices = CollisionIndices,
                 Bounds = Bounds,
+                Connectivity = Connectivity,
+                OpenScratch = OpenScratch,
+                FillStack = FillStack,
             };
         }
 
@@ -130,6 +141,9 @@ namespace PicaVoxel
             if (CollisionVertices.IsCreated) CollisionVertices.Dispose();
             if (CollisionIndices.IsCreated) CollisionIndices.Dispose();
             if (Bounds.IsCreated) Bounds.Dispose();
+            if (Connectivity.IsCreated) Connectivity.Dispose();
+            if (OpenScratch.IsCreated) OpenScratch.Dispose();
+            if (FillStack.IsCreated) FillStack.Dispose();
         }
     }
 

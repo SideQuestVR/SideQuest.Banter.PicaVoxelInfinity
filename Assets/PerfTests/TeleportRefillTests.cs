@@ -88,6 +88,8 @@ namespace PicaVoxelPerf
             volume.InfiniteChunkRadius = 5;
             volume.InfiniteChunkBounds = new Vector3Int(0, 1, 0);
             volume.MeshingMode = MeshingMode.Culled;
+            volume.CaveCulling = false;   // this checks what is drawn, chunk by chunk,
+            volume.CullWorldFloor = false; // against the managed mesher, which makes every face
             volume.CollisionMode = CollisionMode.MeshColliderConcave;
             volume.ChunkLayer = 0;
             var gen = go.AddComponent<TerrainGenerator>();

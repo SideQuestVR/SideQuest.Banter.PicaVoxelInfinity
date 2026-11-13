@@ -25,14 +25,16 @@ namespace PicaVoxel
         public static int ColliderBakes;
         /// <summary>Chunks instantiated or recycled into a new position.</summary>
         public static int ChunksPlaced;
+        /// <summary>Cave culling walks done (one whenever the camera's chunk or a chunk's connectivity changes).</summary>
+        public static int CullWalks;
 
         public static void Reset()
         {
-            DataJobs = MeshJobs = MeshesApplied = ImmediateMeshes = ColliderBakes = ChunksPlaced = 0;
+            DataJobs = MeshJobs = MeshesApplied = ImmediateMeshes = ColliderBakes = ChunksPlaced = CullWalks = 0;
         }
 
         public static string Summary() =>
             $"data={DataJobs} meshJobs={MeshJobs} applied={MeshesApplied} immediate={ImmediateMeshes} " +
-            $"bakes={ColliderBakes} placed={ChunksPlaced}";
+            $"bakes={ColliderBakes} placed={ChunksPlaced} cullWalks={CullWalks}";
     }
 }

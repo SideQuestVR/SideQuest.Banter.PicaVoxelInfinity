@@ -131,6 +131,7 @@ namespace PicaVoxel
             }
             ResetState();
             Position = pos;
+            _volume.CellRegister(this);
             transform.localPosition = new Vector3((Position.x*Volume.ChunkSize)-(Volume.ChunkSize*0.5f), (Position.y*Volume.ChunkSize)-(Volume.ChunkSize*0.5f), (Position.z*Volume.ChunkSize)-(Volume.ChunkSize*0.5f)) * Volume.VoxelSize;
             gameObject.layer = Volume.ChunkLayer;
             if(Voxels==null || Voxels.Length==0)
@@ -153,6 +154,7 @@ namespace PicaVoxel
         /// </summary>
         private void ResetState()
         {
+            CaveCulled = false;
             SetRenderer(false, true);
             if (mc is not null)
             {
@@ -192,6 +194,7 @@ namespace PicaVoxel
             if (_changes.Count > 0 && _persistTime > 0f)
                 SaveChanges();
 
+            _volume.CellUnregister(this);
             lock (_generationLock)
             {
                 _generation++;
@@ -656,7 +659,7 @@ namespace PicaVoxel
             GatherNeighbours();
             ctx.Generation = _generation;
             ctx.Pin(_neighbours);
-            ctx.Handle = ctx.CreateJob(_volume, _volume.CollisionMode != CollisionMode.None).Schedule();
+            ctx.Handle = ctx.CreateJob(_volume, _volume.CollisionMode != CollisionMode.None, FloorSolid).Schedule();
             ctx.Scheduled = true;
             _meshJob = ctx;
             PicaVoxelStats.MeshJobs++;
@@ -702,7 +705,7 @@ namespace PicaVoxel
             MeshJobContext ctx = _volume.ImmediateMeshContext;
             ctx.Generation = _generation;
             ctx.Pin(_neighbours);
-            ctx.CreateJob(_volume, _volume.CollisionMode != CollisionMode.None).Run();
+            ctx.CreateJob(_volume, _volume.CollisionMode != CollisionMode.None, FloorSolid).Run();
             ctx.Complete();
             ApplyMesh(ctx, true);
             PicaVoxelStats.ImmediateMeshes++;
@@ -722,6 +725,8 @@ namespace PicaVoxel
 
         private void ApplyMesh(MeshJobContext ctx, bool immediate)
         {
+            // What this chunk now lets the camera see through (cave culling), even when it has no faces to show
+            _volume.SetConnectivity(this, (ushort)ctx.Connectivity[0]);
             Mesh mesh = mf.sharedMesh;
             int vertexCount = ctx.Vertices.Length;
             if (vertexCount == 0)
@@ -852,9 +857,44 @@ namespace PicaVoxel
         private void SetRenderer(bool on, bool force = false)
         {
             if (mr is null || (!force && _rendererOn == on)) return;
-            mr.enabled = on;
             _rendererOn = on;
+            ApplyRenderer();
         }
+
+        /// <summary>True while cave culling has this chunk hidden (see Volume.CaveCulling). Its collider stays on.</summary>
+        public bool CaveCulled { get; private set; }
+        private bool _shadowsOnly;
+
+        internal void SetCaveCulled(bool culled)
+        {
+            if (CaveCulled == culled) return;
+            CaveCulled = culled;
+            ApplyRenderer();
+        }
+
+        // The renderer shows when the chunk has a mesh to show and cave culling hasn't hidden it. A volume that casts
+        // shadows keeps a culled chunk drawing into the shadow maps (shadows only), so its shadows don't vanish.
+        private void ApplyRenderer()
+        {
+            if (mr is null) return;
+            bool shadows = !ReferenceEquals(_volume, null) && _volume.CastShadows != ShadowCastingMode.Off;
+            bool show = _rendererOn && (!CaveCulled || shadows);
+            if (mr.enabled != show)
+                mr.enabled = show;
+            if (shadows && _rendererConfigured)
+            {
+                bool shadowsOnly = _rendererOn && CaveCulled;
+                if (shadowsOnly != _shadowsOnly)
+                {
+                    _shadowsOnly = shadowsOnly;
+                    mr.shadowCastingMode = shadowsOnly ? ShadowCastingMode.ShadowsOnly : _volume.CastShadows;
+                }
+            }
+        }
+
+        // The world below the bottom row of chunks is solid (see Volume.CullWorldFloor)
+        private bool FloorSolid => _volume.CullWorldFloor && _volume.IsInfinite &&
+                                   _volume.InfiniteChunkBounds.y > 0 && Position.y == -_volume.InfiniteChunkBounds.y;
 
         private void SetCollider(bool on)
         {

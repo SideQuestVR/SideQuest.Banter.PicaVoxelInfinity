@@ -83,7 +83,7 @@ namespace PicaVoxelPerf
             CountTrees(out long leaves, out long trunks);
             _report.AppendLine($"  trees after load: leaves={leaves} trunks={trunks}");
             _report.AppendLine($"  load settled after {loadSeconds:F2}s, chunks={_volume.Chunks.Count}, collided={lastCount}, " +
-                               $"verts={TotalVertices()}, colliderTris={TotalColliderTriangles()}");
+                               $"verts={TotalVertices()}, colliderTris={TotalColliderTriangles()}, culledChunks={_volume.CulledChunkCount}");
 
             if (Environment.GetEnvironmentVariable("PV_QUICK") == "1")
             {
@@ -137,6 +137,10 @@ namespace PicaVoxelPerf
             _volume.GenerationSeed = 1337;
             _volume.MeshingMode = MeshingMode.Culled;
             _volume.MeshColliderMeshingMode = MeshingMode.Culled;
+            // Off unless PV_CULL=1, so runs stay comparable with the earlier ones
+            bool cull = Environment.GetEnvironmentVariable("PV_CULL") == "1";
+            _volume.CaveCulling = cull;
+            _volume.CullWorldFloor = cull;
             _volume.CollisionMode = CollisionMode.MeshColliderConcave;
             _volume.SelfShadingIntensity = 0.7f;
             _volume.Material = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
@@ -245,6 +249,9 @@ namespace PicaVoxelPerf
             foreach (var kv in _volume.Chunks)
             {
                 Chunk c = kv.Value;
+                if (c.CaveCulled) continue;   // (hidden on purpose)
+                // (the bottom row has no floor faces when they're culled; the managed mesher this is checked against makes them)
+                if (_volume.CullWorldFloor && kv.Key.Item2 == -_volume.InfiniteChunkBounds.y) continue;
                 var p = kv.Key;
                 // Only chunks whose whole neighbourhood is loaded: the outer ring legitimately waits on chunks to come
                 bool full = true;

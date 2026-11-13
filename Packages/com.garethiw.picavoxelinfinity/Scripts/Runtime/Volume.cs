@@ -157,6 +157,14 @@ namespace PicaVoxel
         [Tooltip("Re-mesh the outer ring of chunks every pass, as older versions did. Neighbours now re-mesh " +
                  "when they need to, so this only costs time.")]
         public bool PeriodicRemesh = false;
+        [Tooltip("Infinite volumes, Culled meshing: don't draw chunks the camera can't see because they're sealed off " +
+                 "underground (flood-filled per chunk when it meshes, then walked outwards from the camera's chunk). " +
+                 "Culled chunks keep their colliders. Chunks drawn by other cameras (mirrors, say) are hidden too, " +
+                 "and with shadows on a culled chunk still draws into the shadow maps.")]
+        public bool CaveCulling = true;
+        [Tooltip("Infinite volumes with Y bounds: the faces on the underside of the bottom row of chunks, which face " +
+                 "the void and can't be seen from anywhere, aren't made.")]
+        public bool CullWorldFloor = true;
 
         private static int s_mainThreadId = -1;
 
@@ -312,6 +320,7 @@ namespace PicaVoxel
 
             StartDataJobs();
             FinishMeshJobs();
+            UpdateCaveCulling();
             StartMeshJobs();
 
             if (!IsInfinite && _isFirstPass && IsDataReady)
@@ -819,8 +828,168 @@ namespace PicaVoxel
             }
         }
 
+        // Cave culling ////////////////////////////////////////////////////
+        // A grid of cells, one per chunk position near the camera (see ChunkConnectivity.CellIndex), holding each
+        // chunk's connectivity mask and the chunk. ChunkVisibilityJob walks it from the camera's chunk.
+
+        private const int VisibilityMargin = 2;   // chunks further out than the radius that are still walked (the sweep lags)
+        private NativeArray<ushort> _visMasks;
+        private NativeArray<byte> _visVisible;
+        private NativeArray<byte> _visIncoming;
+        private NativeArray<int3> _visQueue;
+        private Chunk[] _visChunks;
+        private int3 _visSize, _visBound;
+        private int _visRadius = -1;
+        private int _visMaskVersion;
+        private int _visWalkVersion = -1;
+        private Vector3Int _visWalkFocus;
+        private bool _visAnyCulled;
+
+        /// <summary>Chunks hidden by cave culling after the last walk (0 when it is off).</summary>
+        public int CulledChunkCount { get; private set; }
+
+        private void EnsureVisibilityGrid()
+        {
+            int r = InfiniteChunkRadius + VisibilityMargin;
+            int3 bound = new int3(InfiniteChunkBounds.x, InfiniteChunkBounds.y, InfiniteChunkBounds.z);
+            if (_visMasks.IsCreated && _visRadius == InfiniteChunkRadius && _visBound.Equals(bound))
+                return;
+
+            DisposeVisibilityGrid();
+            _visRadius = InfiniteChunkRadius;
+            _visBound = bound;
+            _visSize = new int3(
+                bound.x > 0 ? 2 * bound.x + 1 : 2 * r + 1,
+                bound.y > 0 ? 2 * bound.y + 1 : 2 * r + 1,
+                bound.z > 0 ? 2 * bound.z + 1 : 2 * r + 1);
+            int cells = _visSize.x * _visSize.y * _visSize.z;
+            _visMasks = new NativeArray<ushort>(cells, Allocator.Persistent);
+            for (int i = 0; i < cells; i++) _visMasks[i] = ChunkConnectivity.All;
+            _visVisible = new NativeArray<byte>(cells, Allocator.Persistent);
+            _visIncoming = new NativeArray<byte>(cells, Allocator.Persistent);
+            _visQueue = new NativeArray<int3>(cells, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            _visChunks = new Chunk[cells];
+            // Chunks that exist already (the grid is made late, or the radius changed): back in, masks unknown
+            lock (_chunksLock)
+                foreach (Chunk c in Chunks.Values)
+                    CellRegister(c);
+            _visWalkVersion = -1;
+        }
+
+        private void DisposeVisibilityGrid()
+        {
+            if (_visMasks.IsCreated) _visMasks.Dispose();
+            if (_visVisible.IsCreated) _visVisible.Dispose();
+            if (_visIncoming.IsCreated) _visIncoming.Dispose();
+            if (_visQueue.IsCreated) _visQueue.Dispose();
+            _visChunks = null;
+        }
+
+        private int CellOf((int x, int y, int z) p) =>
+            ChunkConnectivity.CellIndex(new int3(p.x, p.y, p.z), _visBound, _visSize);
+
+        // A chunk takes the cell of its (new) position; nothing is known about it yet
+        internal void CellRegister(Chunk chunk)
+        {
+            if (!_visMasks.IsCreated)
+                return;
+            int cell = CellOf(chunk.Position);
+            _visChunks[cell] = chunk;
+            _visMasks[cell] = ChunkConnectivity.All;
+            _visMaskVersion++;
+        }
+
+        // A chunk leaves its position (it goes back in the pool); its cell is only cleared if it still holds it
+        internal void CellUnregister(Chunk chunk)
+        {
+            if (!_visMasks.IsCreated)
+                return;
+            int cell = CellOf(chunk.Position);
+            if (!ReferenceEquals(_visChunks[cell], chunk))
+                return;
+            _visChunks[cell] = null;
+            _visMasks[cell] = ChunkConnectivity.All;
+            _visMaskVersion++;
+        }
+
+        internal void SetConnectivity(Chunk chunk, ushort mask)
+        {
+            if (!_visMasks.IsCreated)
+                return;
+            int cell = CellOf(chunk.Position);
+            if (!ReferenceEquals(_visChunks[cell], chunk) || _visMasks[cell] == mask)
+                return;
+            _visMasks[cell] = mask;
+            _visMaskVersion++;
+        }
+
+        // Hides the chunks the camera can't reach through open space. Run after finished meshes are applied (so
+        // a chunk's new mask is in before it is drawn), and only when the camera's chunk or a mask has changed.
+        private void UpdateCaveCulling()
+        {
+            if (!IsInfinite || !UseMeshJobs)
+            {
+                if (_visAnyCulled)
+                    ShowAllChunks();
+                return;
+            }
+
+            // The masks are kept even with culling off, so it can be switched on at any time
+            EnsureVisibilityGrid();
+            if (!CaveCulling || _cameraTransform == null)
+            {
+                if (_visAnyCulled)
+                    ShowAllChunks();
+                return;
+            }
+            if (_visMaskVersion == _visWalkVersion && _focusChunk == _visWalkFocus)
+                return;
+            _visWalkVersion = _visMaskVersion;
+            _visWalkFocus = _focusChunk;
+
+            new ChunkVisibilityJob
+            {
+                Masks = _visMasks,
+                Visible = _visVisible,
+                Incoming = _visIncoming,
+                Queue = _visQueue,
+                Size = _visSize,
+                Bound = _visBound,
+                Start = new int3(_focusChunk.x, _focusChunk.y, _focusChunk.z),
+                Radius = InfiniteChunkRadius + VisibilityMargin,
+            }.Run();
+
+            int hidden = 0;
+            for (int i = 0; i < _visChunks.Length; i++)
+            {
+                Chunk c = _visChunks[i];
+                if (ReferenceEquals(c, null))
+                    continue;
+                bool cull = _visVisible[i] == 0;
+                if (c.CaveCulled != cull)
+                    c.SetCaveCulled(cull);
+                if (cull)
+                    hidden++;
+            }
+            CulledChunkCount = hidden;
+            _visAnyCulled = hidden > 0;
+            PicaVoxelStats.CullWalks++;
+        }
+
+        private void ShowAllChunks()
+        {
+            if (_visChunks != null)
+                foreach (Chunk c in _visChunks)
+                    if (!ReferenceEquals(c, null))
+                        c.SetCaveCulled(false);
+            _visAnyCulled = false;
+            CulledChunkCount = 0;
+            _visWalkVersion = -1;
+        }
+
         private void OnDestroy()
         {
+            DisposeVisibilityGrid();
             foreach (MeshJobContext ctx in _meshContexts)
                 ctx.Dispose();
             _meshContexts.Clear();

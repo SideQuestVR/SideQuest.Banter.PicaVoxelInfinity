@@ -16,6 +16,20 @@ Volumes start work nearest the camera first, within limits you can tune under **
 - **Neighbour Remesh Delay**: how long a chunk that is already showing a mesh waits before re-meshing for a neighbour's new data, so several arriving together cost one re-mesh.
 - **Merge Collider Faces**: merge coplanar collision faces (same surfaces, far fewer triangles).
 - **Periodic Remesh**: re-mesh the outer ring of chunks every pass, as older versions did. Off by default; it only costs time now.
+- **Cave Culling**: infinite volumes with Culled meshing don't draw chunks the camera can't see through open space (see below). On by default.
+- **Cull World Floor**: infinite volumes with Y bounds don't make the faces on the underside of the bottom row of chunks. On by default.
+
+### Cave culling
+
+Underground chunks are drawn even though you can never see them: tunnels and caverns add faces, and nothing hides terrain behind other terrain. Cave culling skips them, the way Minecraft does:
+
+1. When a chunk meshes (in the same Burst job), its open voxels (air, and see-through blocks such as leaves, glass and water) are flood filled, and the chunk records which pairs of its six sides are joined by open space: a 15 bit mask, 0 for solid rock, all 15 for open air.
+2. A second small Burst job walks outwards from the camera's chunk, moving from chunk to chunk only through sides its mask says are joined, and never turning back along an axis. It runs when the camera changes chunk or a chunk's mask changes, over a grid of the chunks near the camera.
+3. Chunks the walk doesn't reach have their renderers switched off. Their colliders stay on, and with shadows on they still draw into the shadow maps (shadows only).
+
+It never hides something the camera can see (the tests check rays against it); it can keep chunks that are actually hidden behind solid ground, since it follows connections rather than looking at where things are. Chunks without a mask yet count as open. In a cave the surface mostly disappears instead. A chunk's mask is its own voxels only, so edits and loaded changes update it with the re-mesh they already cause. Other cameras (a mirror, say) see the world as the main camera does, with the hidden chunks missing: turn it off for those. `Volume.CulledChunkCount` and `PicaVoxelStats.CullWalks` show what it is doing.
+
+**Cull World Floor** is the simple part: below the bottom row of chunks there is nothing, so the downward faces of its lowest voxels (which face the void) aren't made, in the render mesh or the collider.
 
 Chunk processors that write into neighbouring chunks should use `Volume.WriteVoxelFromNeighbour`, which holds the write until that chunk has generated rather than having the generator overwrite it. `PicaVoxelStats` counts the work volumes do, and `Assets/PerfTests` has a benchmark and equivalence tests (run them from the Test Runner, PlayMode).
 

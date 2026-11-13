@@ -104,6 +104,11 @@ namespace PicaVoxel
         public bool BuildCollision;
         /// <summary>Merge coplanar collision faces (needs ChunkSize <= 32; otherwise each face is its own quad).</summary>
         public bool MergeCollision;
+        /// <summary>
+        /// The world is solid below this chunk (it is in the bottom row of a volume with bounds), so the faces of its
+        /// lowest voxels that face down are never seen or touched: they are not made.
+        /// </summary>
+        public bool FloorSolid;
 
         /// <summary>27 pointers to the voxel arrays of the chunk (index 13) and its neighbours, 0 where none.</summary>
         [ReadOnly] public NativeArray<long> Neighbours;
@@ -122,6 +127,12 @@ namespace PicaVoxel
         public NativeList<int> CollisionIndices;
         /// <summary>[0] min, [1] max of the render vertices.</summary>
         public NativeArray<float3> Bounds;
+        /// <summary>[0] out: which sides of the chunk its open voxels join (<see cref="ChunkConnectivity"/>).</summary>
+        public NativeArray<int> Connectivity;
+        /// <summary>Scratch: ChunkSize^3 voxel states for the flood fill.</summary>
+        public NativeArray<byte> OpenScratch;
+        /// <summary>Scratch: ChunkSize^3 voxel indices for the flood fill.</summary>
+        public NativeArray<int> FillStack;
 
         int _stride;
 
@@ -135,6 +146,7 @@ namespace PicaVoxel
 
             _stride = ChunkSize + 2;
             FillPadded();
+            Connectivity[0] = ComputeConnectivity();
 
             bool mergeCollision = BuildCollision && MergeCollision && ChunkSize <= 32;
             if (mergeCollision)
@@ -263,9 +275,73 @@ namespace PicaVoxel
             else { lo = cs; hi = cs; src = 0; }
         }
 
+        // Open space, for seeing through: air, and the see-through blocks (transparent or meshed custom blocks, which
+        // never hide a face either)
+        bool IsOpen(Voxel v)
+        {
+            if (v.State != 1) return true;
+            byte flags = Blocks.Flags[v.Value];
+            return (flags & CustomBlockTables.IsCustom) != 0 &&
+                   (flags & (CustomBlockTables.Transparent | CustomBlockTables.HasMesh)) != 0;
+        }
+
+        // Which pairs of the chunk's six sides its open voxels join: each run of connected open voxels (6-connected)
+        // touches some of the sides, and joins every pair of those.
+        int ComputeConnectivity()
+        {
+            int cs = ChunkSize;
+            int count = cs * cs * cs;
+            int open = 0;
+            for (int z = 0; z < cs; z++)
+            for (int y = 0; y < cs; y++)
+            for (int x = 0; x < cs; x++)
+            {
+                bool isOpen = IsOpen(Padded[Index(x, y, z)]);
+                OpenScratch[x + cs * (y + cs * z)] = isOpen ? (byte)1 : (byte)0;
+                if (isOpen) open++;
+            }
+            if (open == 0) return 0;
+            if (open == count) return ChunkConnectivity.All;
+
+            int mask = 0;
+            int layer = cs * cs;
+            for (int first = 0; first < count; first++)
+            {
+                if (OpenScratch[first] != 1) continue;
+
+                int touched = 0;
+                int sp = 0;
+                FillStack[sp++] = first;
+                OpenScratch[first] = 2;
+                while (sp > 0)
+                {
+                    int i = FillStack[--sp];
+                    int x = i % cs, y = (i / cs) % cs, z = i / layer;
+                    if (x == 0) touched |= 1;
+                    if (x == cs - 1) touched |= 2;
+                    if (y == 0) touched |= 4;
+                    if (y == cs - 1) touched |= 8;
+                    if (z == 0) touched |= 16;
+                    if (z == cs - 1) touched |= 32;
+
+                    if (x > 0 && OpenScratch[i - 1] == 1) { OpenScratch[i - 1] = 2; FillStack[sp++] = i - 1; }
+                    if (x < cs - 1 && OpenScratch[i + 1] == 1) { OpenScratch[i + 1] = 2; FillStack[sp++] = i + 1; }
+                    if (y > 0 && OpenScratch[i - cs] == 1) { OpenScratch[i - cs] = 2; FillStack[sp++] = i - cs; }
+                    if (y < cs - 1 && OpenScratch[i + cs] == 1) { OpenScratch[i + cs] = 2; FillStack[sp++] = i + cs; }
+                    if (z > 0 && OpenScratch[i - layer] == 1) { OpenScratch[i - layer] = 2; FillStack[sp++] = i - layer; }
+                    if (z < cs - 1 && OpenScratch[i + layer] == 1) { OpenScratch[i + layer] = 2; FillStack[sp++] = i + layer; }
+                }
+                mask |= ChunkConnectivity.PairsOf(touched);
+                if (mask == ChunkConnectivity.All) break;
+            }
+            return mask;
+        }
+
         // A neighbour that hides a face: a full cube, not a transparent or meshed custom block.
         bool Occludes(int x, int y, int z)
         {
+            // Below the bottom of the world (see FloorSolid)
+            if (FloorSolid && y < 0) return true;
             Voxel n = Padded[Index(x, y, z)];
             if (n.State != 1) return false;
             byte flags = Blocks.Flags[n.Value];

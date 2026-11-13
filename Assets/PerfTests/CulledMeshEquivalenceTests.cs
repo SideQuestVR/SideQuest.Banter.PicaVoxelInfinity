@@ -253,6 +253,184 @@ namespace PicaVoxelPerf
             yield return null;
         }
 
+        // Which sides of a chunk its open voxels join, against a plain flood fill written here (and a pair numbering
+        // counted out in order, rather than the job's formula)
+        static int ReferenceConnectivity(Chunk chunk, Dictionary<int, CustomBlockData> blocks)
+        {
+            var open = new bool[CS * CS * CS];
+            for (int i = 0; i < open.Length; i++)
+            {
+                Voxel v = chunk.Voxels[i];
+                open[i] = v.State != 1 || (blocks.TryGetValue(v.Value, out var cb) && (cb.HasTransparency || cb.HasMesh));
+            }
+            int mask = 0;
+            var seen = new bool[open.Length];
+            for (int start = 0; start < open.Length; start++)
+            {
+                if (!open[start] || seen[start]) continue;
+                int touched = 0;
+                var stack = new Stack<int>();
+                stack.Push(start);
+                seen[start] = true;
+                while (stack.Count > 0)
+                {
+                    int i = stack.Pop();
+                    int x = i % CS, y = i / CS % CS, z = i / (CS * CS);
+                    if (x == 0) touched |= 1 << 0;
+                    if (x == CS - 1) touched |= 1 << 1;
+                    if (y == 0) touched |= 1 << 2;
+                    if (y == CS - 1) touched |= 1 << 3;
+                    if (z == 0) touched |= 1 << 4;
+                    if (z == CS - 1) touched |= 1 << 5;
+                    foreach (var (dx, dy, dz) in new[] { (-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1) })
+                    {
+                        int nx = x + dx, ny = y + dy, nz = z + dz;
+                        if (nx < 0 || ny < 0 || nz < 0 || nx >= CS || ny >= CS || nz >= CS) continue;
+                        int n = nx + CS * (ny + CS * nz);
+                        if (open[n] && !seen[n]) { seen[n] = true; stack.Push(n); }
+                    }
+                }
+                int bit = 0;
+                for (int a = 0; a < 5; a++)
+                for (int b = a + 1; b < 6; b++, bit++)
+                    if ((touched & (1 << a)) != 0 && (touched & (1 << b)) != 0)
+                        mask |= 1 << bit;
+            }
+            return mask;
+        }
+
+        static Voxel Solid() => new Voxel { State = 1, Value = 2, Color = new Color32(255, 255, 255, 255) };
+
+        [UnityTest]
+        public IEnumerator ConnectivityMaskMatchesAReferenceFloodFill()
+        {
+            var tables = Volume.BuildBlockTables(_volume.CustomBlocksDict);
+            var ctx = new MeshJobContext(CS);
+            try
+            {
+                var shapes = new List<(string name, System.Action<Chunk> fill, int expect)>
+                {
+                    ("all air", c => { }, ChunkConnectivity.All),
+                    ("all solid", c => { for (int i = 0; i < c.Voxels.Length; i++) c.Voxels[i] = Solid(); }, 0),
+                    // A tunnel along x: -x and +x only (pair 0)
+                    ("tunnel", c => { Fill(c, Solid()); for (int x = 0; x < CS; x++) c.Voxels[x + CS * (5 + CS * 7)] = default; }, 1 << 0),
+                    // From the -x side along x to the middle, then along z to the +z side: (-x, +z) is pair 4
+                    ("L tunnel", c =>
+                    {
+                        Fill(c, Solid());
+                        for (int x = 0; x <= 8; x++) c.Voxels[x + CS * (5 + CS * 8)] = default;
+                        for (int z = 8; z < CS; z++) c.Voxels[8 + CS * (5 + CS * z)] = default;
+                    }, 1 << 4),
+                    // A closed cavity touches no side
+                    ("sealed cavity", c =>
+                    {
+                        Fill(c, Solid());
+                        for (int z = 4; z < 9; z++) for (int y = 4; y < 9; y++) for (int x = 4; x < 9; x++) c.Voxels[x + CS * (y + CS * z)] = default;
+                    }, 0),
+                    // Two separate tunnels (x to x, and y to y): they don't join each other
+                    ("two tunnels", c =>
+                    {
+                        Fill(c, Solid());
+                        for (int x = 0; x < CS; x++) c.Voxels[x + CS * (3 + CS * 3)] = default;
+                        for (int y = 0; y < CS; y++) c.Voxels[12 + CS * (y + CS * 12)] = default;
+                    }, (1 << 0) | (1 << ChunkConnectivity.PairBit(2, 3))),
+                    // A see-through block (leaves, value 12) is open; a glass-like meshed block (5) too; solid cubes are not
+                    ("leaves", c =>
+                    {
+                        Fill(c, Solid());
+                        for (int x = 0; x < CS; x++) c.Voxels[x + CS * (2 + CS * 2)] = new Voxel { State = 2, Value = 12 };
+                    }, 1 << 0),
+                };
+
+                foreach (var (name, fill, expect) in shapes)
+                {
+                    MakeChunks(1, 0f, false);
+                    Chunk centre = _chunks[(0, 0, 0)];
+                    fill(centre);
+                    ctx.Pin(Neighbours());
+                    Job(ctx, tables, 0.7f, false).Run();
+                    ctx.Complete();
+                    int reference = ReferenceConnectivity(centre, _volume.CustomBlocksDict);
+                    Assert.AreEqual(expect, reference, $"{name}: the reference itself");
+                    Assert.AreEqual(expect, ctx.Connectivity[0], $"{name}: mask");
+                }
+
+                // Random fills of every density, custom blocks and orientation states among them
+                for (int seed = 0; seed < 60; seed++)
+                {
+                    MakeChunks(500 + seed, 0.05f + 0.016f * seed, false);
+                    Chunk centre = _chunks[(0, 0, 0)];
+                    ctx.Pin(Neighbours());
+                    Job(ctx, tables, 0.7f, false).Run();
+                    ctx.Complete();
+                    Assert.AreEqual(ReferenceConnectivity(centre, _volume.CustomBlocksDict), ctx.Connectivity[0], $"random fill {seed}");
+                }
+            }
+            finally
+            {
+                ctx.Dispose();
+                tables.Dispose();
+            }
+            yield return null;
+        }
+
+        static void Fill(Chunk c, Voxel v)
+        {
+            for (int i = 0; i < c.Voxels.Length; i++) c.Voxels[i] = v;
+        }
+
+        // The bottom row of a volume with bounds has solid world under it: its lowest voxels' down faces (and their
+        // collision) go, and nothing else changes
+        [UnityTest]
+        public IEnumerator FloorCullingDropsOnlyTheFacesUnderTheBottomRow()
+        {
+            var tables = Volume.BuildBlockTables(_volume.CustomBlocksDict);
+            var ctx = new MeshJobContext(CS);
+            try
+            {
+                MakeChunks(1, 0f, false);
+                Chunk centre = _chunks[(0, 0, 0)];
+                // A slab four voxels deep right on the floor, with a notch cut out of its bottom layer
+                for (int z = 0; z < CS; z++) for (int y = 0; y < 4; y++) for (int x = 0; x < CS; x++)
+                    centre.Voxels[x + CS * (y + CS * z)] = Solid();
+                centre.Voxels[3 + CS * (0 + CS * 3)] = default;
+
+                int Faces(MeshJobContext c, bool onFloor)
+                {
+                    int n = 0;
+                    for (int i = 0; i < c.Vertices.Length; i += 4)
+                        if (c.Vertices[i].Normal.y < -0.9f && (c.Vertices[i].Position.y < 0.001f) == onFloor) n++;
+                    return n;
+                }
+
+                ctx.Pin(Neighbours());
+                Job(ctx, tables, 0.7f, true, floorSolid: false).Run();
+                ctx.Complete();
+                int quadsWith = ctx.Vertices.Length / 4;
+                int floorWith = Faces(ctx, true);
+                int collisionWith = ctx.CollisionIndices.Length;
+
+                ctx.Pin(Neighbours());
+                Job(ctx, tables, 0.7f, true, floorSolid: true).Run();
+                ctx.Complete();
+                int floorWithout = Faces(ctx, true);
+
+                // 16 x 16 floor faces, less the notch's, drawn before; none after
+                Assert.AreEqual(CS * CS - 1, floorWith, "floor faces without culling");
+                Assert.AreEqual(0, floorWithout, "floor faces with culling");
+                Assert.AreEqual(quadsWith - floorWith, ctx.Vertices.Length / 4, "only floor faces are gone");
+                Assert.Less(ctx.CollisionIndices.Length, collisionWith, "the floor's collision is gone too");
+                // The notch's own faces (its roof, which faces down but isn't on the floor) are still there
+                Assert.AreEqual(1, Faces(ctx, false), "faces facing down above the floor");
+            }
+            finally
+            {
+                ctx.Dispose();
+                tables.Dispose();
+            }
+            yield return null;
+        }
+
         [UnityTest]
         public IEnumerator MergedColliderAnswersRaycastsLikeTheOldOne()
         {
@@ -472,7 +650,7 @@ namespace PicaVoxelPerf
             return r;
         }
 
-        CulledMeshJob Job(MeshJobContext ctx, CustomBlockTables tables, float shade, bool collision)
+        CulledMeshJob Job(MeshJobContext ctx, CustomBlockTables tables, float shade, bool collision, bool floorSolid = false)
         {
             return new CulledMeshJob
             {
@@ -481,6 +659,10 @@ namespace PicaVoxelPerf
                 SelfShadeIntensity = shade,
                 BuildCollision = collision,
                 MergeCollision = true,
+                FloorSolid = floorSolid,
+                Connectivity = ctx.Connectivity,
+                OpenScratch = ctx.OpenScratch,
+                FillStack = ctx.FillStack,
                 Neighbours = ctx.Neighbours,
                 Blocks = tables,
                 Padded = ctx.Padded,
