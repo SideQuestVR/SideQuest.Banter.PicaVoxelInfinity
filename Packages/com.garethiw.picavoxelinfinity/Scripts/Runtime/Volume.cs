@@ -422,7 +422,11 @@ namespace PicaVoxel
                                     s = 1;
                                 if (s != slice)
                                     continue;
-                                if ((thisUpdateccpos - cpos).sqrMagnitude <= (InfiniteChunkRadius - thisUpdateMargin) *
+                                // Only the outer ring is checked, the inside being there already. After a jump the
+                                // margin is the whole radius and nothing is skipped (<= 0 skipped the camera's own
+                                // chunk, which was then never created: a hole where a far respawn landed)
+                                if (thisUpdateMargin < InfiniteChunkRadius &&
+                                    (thisUpdateccpos - cpos).sqrMagnitude <= (InfiniteChunkRadius - thisUpdateMargin) *
                                     (InfiniteChunkRadius - thisUpdateMargin))
                                     continue;
                             }
@@ -462,11 +466,12 @@ namespace PicaVoxel
 
         // Scheduling //////////////////////////////////////////////////////
 
-        // The infinite sweep's range on one axis: radius around the centre, cut to the bounds when there are some
+        // The infinite sweep's range on one axis: radius around the centre, both ends included (hi is exclusive),
+        // cut to the bounds when there are some
         private void SweepRange(int centre, int bound, out int lo, out int hi)
         {
             lo = centre - InfiniteChunkRadius;
-            hi = centre + InfiniteChunkRadius;
+            hi = centre + InfiniteChunkRadius + 1;
             if (bound > 0)
             {
                 lo = Math.Max(lo, -bound);

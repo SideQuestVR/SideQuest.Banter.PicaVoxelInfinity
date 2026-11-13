@@ -156,10 +156,11 @@ namespace PicaVoxel
             SetRenderer(false, true);
             if (mc is not null)
             {
+                // Only switched off: the collision mesh stays on it (and _colActive with it), so the next one
+                // assigned is the other of the pair. Nulling it and then assigning the same mesh again was
+                // silently ignored by the MeshCollider, leaving a recycled chunk visible but with no collider.
                 mc.enabled = false;
-                mc.sharedMesh = null;
                 _colliderOn = false;
-                _colActive = -1;
             }
             if (mf is not null && mf.sharedMesh is not null)
                 mf.sharedMesh.Clear();
